@@ -576,9 +576,37 @@ footer p span {
     color: #bbb;
 }
 
+.btn-buy {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    /*width: 100%;*/
+    margin: 20px 20px auto;
+}
+
 .btn-buy:hover {
     background-color: #073f6c;
     font-weight: bold;
+}
+
+.btn-empty {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    /*width: 100%;*/
+    margin: 20px auto;
 }
 
 .quantity-selector {
@@ -594,7 +622,7 @@ footer p span {
 }
 
 
-.qty-btn {
+.btn-qty {
     background: white;
     border: 1px solid #dfe4ea;
     width: 35px;
