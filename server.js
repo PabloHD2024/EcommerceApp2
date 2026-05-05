@@ -133,3 +133,96 @@ app.delete('/api/productos/:id', (req, res) => {
 app.listen(PORT, () => {
     console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
 });
+
+// Base de datos simulada en memoria para Categorías
+let categoriasDB = [
+    { id: 1, nombre: "Tecnología" },
+    { id: 2, nombre: "Hogar" },
+    { id: 3, nombre: "Audio" }
+];
+// GET - Obtener todas las categorías
+app.get('/api/categorias', (req, res) => {
+    res.json(categoriasDB);
+});
+
+// GET - Obtener una categoría por ID
+app.get('/api/categorias/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+
+    const categoria = categoriasDB.find(cat => cat.id === id);
+
+    if (!categoria) {
+        return res.status(404).json({
+            mensaje: "Categoría no encontrada"
+        });
+    }
+
+    res.json(categoria);
+});
+
+// POST - Crear una nueva categoría
+app.post('/api/categorias', (req, res) => {
+    const nuevaCategoria = req.body;
+
+    if (!nuevaCategoria.nombre) {
+        return res.status(400).json({
+            mensaje: "El nombre de la categoría es obligatorio"
+        });
+    }
+
+    const nuevoId = categoriasDB.length > 0
+        ? categoriasDB[categoriasDB.length - 1].id + 1
+        : 1;
+
+    const categoriaCreada = {
+        id: nuevoId,
+        nombre: nuevaCategoria.nombre
+    };
+
+    categoriasDB.push(categoriaCreada);
+
+    res.status(201).json({
+        mensaje: "Categoría creada correctamente",
+        categoria: categoriaCreada
+    });
+});
+
+// PUT - Actualizar una categoría por ID
+app.put('/api/categorias/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+    const datosActualizados = req.body;
+
+    const categoria = categoriasDB.find(cat => cat.id === id);
+
+    if (!categoria) {
+        return res.status(404).json({
+            mensaje: "Categoría no encontrada"
+        });
+    }
+
+    categoria.nombre = datosActualizados.nombre || categoria.nombre;
+
+    res.json({
+        mensaje: "Categoría actualizada correctamente",
+        categoria: categoria
+    });
+});
+
+// DELETE - Eliminar una categoría por ID
+app.delete('/api/categorias/:id', (req, res) => {
+    const id = parseInt(req.params.id);
+
+    const existeCategoria = categoriasDB.some(cat => cat.id === id);
+
+    if (!existeCategoria) {
+        return res.status(404).json({
+            mensaje: "Categoría no encontrada"
+        });
+    }
+
+    categoriasDB = categoriasDB.filter(cat => cat.id !== id);
+
+    res.json({
+        mensaje: "Categoría eliminada correctamente"
+    });
+});
