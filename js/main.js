@@ -26,7 +26,9 @@ function getProductImage(id) {
         3: "../img/JBL.png",
         4: "../img/Auriculares Sony WH-1000XM5.png",
         5: "../img/24'' UHD (3840x2160) 4K IPS LED.png",
-        6: "../img/Teclado Mecánico RGB.png"
+        6: "../img/Teclado Mecánico RGB.png",
+        7: "../img/Notebook Cx Cx40082.jpeg",
+        8: "../img/Notebook Bangho Bes Pro T5 R5.jpeg"
     };
     return images[id] || "https://via.placeholder.com/80x80?text=Producto";
 }
@@ -106,110 +108,70 @@ function handleAddToCart(event) {
 }
 
 // ========== CARGAR PRODUCTOS EN LA PÁGINA productos.html ==========
-function loadProductsPage() {
+
+// ========== CARGAR PRODUCTOS EN LA PÁGINA productos.html ==========
+async function loadProductsPage() {
     const productsList = document.getElementById('products-list');
-    if (!productsList) return; // No estamos en la página de productos
-    
-    console.log("Cargando página de productos...");
-    
-    // Lista completa de productos
-    const allProducts = [
-        {
-            id: 1,
-            name: "Freidora de Aire 5L",
-            price: 89990,
-            image: "../img/Freidora.png",
-            rating: 4,
-            reviews: 120
-        },
-        {
-            id: 2,
-            name: "Smartwatch Pro",
-            price: 59990,
-            image: "../img/Smartwatch.png",
-            rating: 5,
-            reviews: 85
-        },
-        {
-            id: 3,
-            name: "Parlante JBL Flip 6",
-            price: 129990,
-            image: "../img/JBL.png",
-            rating: 4.5,
-            reviews: 210
-        },
-        {
-            id: 4,
-            name: "Auriculares Sony WH-1000XM5",
-            price: 349990,
-            image: "../img/Auriculares Sony WH-1000XM5.png",
-            rating: 5,
-            reviews: 45
-        },
-        {
-            id: 5,
-            name: "Monitor LG 24' 4K",
-            price: 289990,
-            image: "../img/24'' UHD (3840x2160) 4K IPS LED.png",
-            rating: 4,
-            reviews: 67
-        },
-        {
-            id: 6,
-            name: "Teclado Mecánico RGB",
-            price: 45990,
-            image: "../img/Teclado Mecánico RGB.png",
-            rating: 4.5,
-            reviews: 112
+    if (!productsList) return;
+
+    console.log("Cargando página de productos desde JSON...");
+
+    try {
+        // 1. Buscamos los datos (ajusta la ruta si lo metes en una carpeta)
+        const response = await fetch('/data/productos.json');
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
         }
-    ];
-    
-    // Generar HTML para cada producto
-    productsList.innerHTML = allProducts.map(product => {
-        // Generar estrellas de rating
-        const fullStars = Math.floor(product.rating);
-        const hasHalfStar = product.rating % 1 !== 0;
-        let starsHTML = '';
-        
-        for (let i = 0; i < fullStars; i++) {
-            starsHTML += '<i class="fa-solid fa-star"></i>';
-        }
-        if (hasHalfStar) {
-            starsHTML += '<i class="fa-regular fa-star-half-stroke"></i>';
-        }
-        const emptyStars = 5 - Math.ceil(product.rating);
-        for (let i = 0; i < emptyStars; i++) {
-            starsHTML += '<i class="fa-regular fa-star"></i>';
-        }
-        
-        return `
-            <div class="product-card">
-                <div class="product-image">
-                    <img src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x200?text=Imagen+no+disponible'">
+
+        const allProducts = await response.json();
+
+        // 2. Generar HTML para cada producto (usando los datos recibidos)
+        productsList.innerHTML = allProducts.map(product => {
+            // Lógica de estrellas
+            const fullStars = Math.floor(product.rating);
+            const hasHalfStar = product.rating % 1 !== 0;
+            let starsHTML = '';
+
+            for (let i = 0; i < fullStars; i++) {
+                starsHTML += '<i class="fa-solid fa-star"></i>';
+            }
+            if (hasHalfStar) {
+                starsHTML += '<i class="fa-regular fa-star-half-stroke"></i>';
+            }
+            const emptyStars = 5 - Math.ceil(product.rating);
+            for (let i = 0; i < emptyStars; i++) {
+                starsHTML += '<i class="fa-regular fa-star"></i>';
+            }
+
+            return `
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x200?text=Imagen+no+disponible'">
+                    </div>
+                    <h3>${product.name}</h3>
+                    <div class="rating">
+                        ${starsHTML}
+                        <span>(${product.reviews})</span>
+                    </div>
+                    <p class="price">$${product.price.toLocaleString('es-AR')}</p>
+                    <button class="btn-add" data-id="${product.id}" data-name="${product.name}" data-price="${product.price}">
+                        <i class="fa-solid fa-cart-plus"></i> Añadir al carrito
+                    </button>
                 </div>
-                <h3>${product.name}</h3>
-                <div class="rating">
-                    ${starsHTML}
-                    <span>(${product.reviews})</span>
-                </div>
-                <p class="price">$${product.price.toLocaleString('es-AR')}</p>
-                <button class="btn-add" data-id="${product.id}" data-name="${product.name}" data-price="${product.price}">
-                    <i class="fa-solid fa-cart-plus"></i> Añadir al carrito
-                </button>
-            </div>
-        `;
-    }).join('');
-    
-    // ASIGNAR EVENTOS A LOS BOTONES - FORMA CORRECTA
-    const btnsAdd = document.querySelectorAll('.btn-add');
-    console.log("Botones encontrados:", btnsAdd.length);
-    
-    btnsAdd.forEach(btn => {
-        // Remover event listeners anteriores para evitar duplicados
-        btn.removeEventListener('click', handleAddToCart);
-        // Agregar nuevo event listener
-        btn.addEventListener('click', handleAddToCart);
-    });
+            `;
+        }).join('');
+
+        // 3. ASIGNAR EVENTOS (debe ir dentro del try, después de crear el HTML)
+        const btnsAdd = document.querySelectorAll('.btn-add');
+        btnsAdd.forEach(btn => {
+            btn.addEventListener('click', handleAddToCart);
+        });
+
+    } catch (error) {
+        console.error("Error detallado:", error);
+        productsList.innerHTML = `<p>Error al cargar los productos: ${error.message}</p>`;
+    }
 }
 
 // ========== FUNCIONES PARA CART.HTML ==========
@@ -220,7 +182,7 @@ function renderCart() {
     if (!cartItemsContainer) return;
     
     if (cart.length === 0) {
-        cartItemsContainer.innerHTML = '<p class="empty-cart" style="text-align: center; padding: 40px;">🛒 Tu carrito está vacío</p>';
+        cartItemsContainer.innerHTML = '<p class="empty-cart" style="text-align: center; padding: 40px;">Tu carrito está vacío</p>';
         if (cartTotalSpan) cartTotalSpan.textContent = '$0';
         return;
     }
