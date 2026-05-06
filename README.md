@@ -392,8 +392,8 @@ Posibles mejoras futuras:
 - Ignacio Vidal
 - Pablo Demartini
 - Lucía Corral
-- Carla
-- Otros integrantes del grupo
+- Carla Guisande
+- Ignacio Hernandez
 
 ---
 
