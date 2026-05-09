@@ -21,6 +21,18 @@ app.use('/api/categorias', categoriasRouter);
 app.use('/api/pedido', pedidoRouter);
 app.use('/api/detalle-pedido', detallePedidoRouter);
 
+app.post('/api/checkout', (req, res) => {
+    const carritoRecibido = req.body;
+
+    console.log("🛒 Nueva compra recibida:");
+    console.log(carritoRecibido);
+
+    res.json({
+        mensaje: "Ticket generado con éxito, gracias por su compra",
+        carrito: carritoRecibido
+    });
+});
+
 /* para probar cuando hay mas de una instancia corriendo
 app.get('/api/test-pedido', (req, res) => {
     res.json({ mensaje: 'Test pedido funcionando' });

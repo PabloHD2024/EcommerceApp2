@@ -114,18 +114,22 @@ async function loadProductsPage() {
     const productsList = document.getElementById('products-list');
     if (!productsList) return;
 
-    console.log("Cargando página de productos desde JSON...");
+    /*console.log("Cargando página de productos desde JSON...");
 
     try {
         // 1. Buscamos los datos (ajusta la ruta si lo metes en una carpeta)
         const response = await fetch('/data/productos.json');
+    */
+   console.log("Cargando página de productos desde la API...");
 
+    try {
+        const response = await fetch('/api/productos');
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
 
         const allProducts = await response.json();
-
+    /*
         // 2. Generar HTML para cada producto (usando los datos recibidos)
         productsList.innerHTML = allProducts.map(product => {
             // Lógica de estrellas
@@ -161,6 +165,52 @@ async function loadProductsPage() {
                 </div>
             `;
         }).join('');
+    */
+
+    // 2. Generar HTML para cada producto usando los datos recibidos desde la API
+productsList.innerHTML = allProducts.map(product => {
+    const nombre = product.nombre || product.name;
+    const precio = product.precio || product.price;
+    const imagen = product.img || product.image || getProductImage(product.id);
+    const rating = product.rating || 4;
+    const reviews = product.reviews || 0;
+
+    // Lógica de estrellas
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+    let starsHTML = '';
+
+    for (let i = 0; i < fullStars; i++) {
+        starsHTML += '<i class="fa-solid fa-star"></i>';
+    }
+
+    if (hasHalfStar) {
+        starsHTML += '<i class="fa-regular fa-star-half-stroke"></i>';
+    }
+
+    const emptyStars = 5 - Math.ceil(rating);
+
+    for (let i = 0; i < emptyStars; i++) {
+        starsHTML += '<i class="fa-regular fa-star"></i>';
+    }
+
+    return `
+        <div class="product-card">
+            <div class="product-image">
+                <img src="${imagen}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/300x200?text=Imagen+no+disponible'">
+            </div>
+            <h3>${nombre}</h3>
+            <div class="rating">
+                ${starsHTML}
+                <span>(${reviews})</span>
+            </div>
+            <p class="price">$${precio.toLocaleString('es-AR')}</p>
+            <button class="btn-add" data-id="${product.id}" data-name="${nombre}" data-price="${precio}">
+                <i class="fa-solid fa-cart-plus"></i> Añadir al carrito
+            </button>
+        </div>
+    `;
+}).join('');
 
         // 3. ASIGNAR EVENTOS (debe ir dentro del try, después de crear el HTML)
         const btnsAdd = document.querySelectorAll('.btn-add');
@@ -275,6 +325,7 @@ function emptyCart() {
     }
 }
 
+/*vieja 
 function checkout() {
     if (cart.length === 0) {
         showNotification('Tu carrito está vacío');
@@ -285,6 +336,42 @@ function checkout() {
     saveCart();
     renderCart();
     window.location.href = '../index.html';
+}
+*/
+
+async function checkout() {
+    if (cart.length === 0) {
+        showNotification('Tu carrito está vacío');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(cart)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        alert(result.mensaje || '¡Gracias por tu compra! Pronto recibirás tu pedido.');
+
+        cart = [];
+        saveCart();
+        renderCart();
+
+        window.location.href = '../index.html';
+
+    } catch (error) {
+        console.error('Error al finalizar la compra:', error);
+        showNotification('Ocurrió un error al finalizar la compra');
+    }
 }
 
 // ========== INICIALIZACIÓN ==========
