@@ -108,8 +108,6 @@ function handleAddToCart(event) {
 }
 
 // ========== CARGAR PRODUCTOS EN LA PÁGINA productos.html ==========
-
-// ========== CARGAR PRODUCTOS EN LA PÁGINA productos.html ==========
 async function loadProductsPage() {
     const productsList = document.getElementById('products-list');
     if (!productsList) return;
@@ -117,7 +115,7 @@ async function loadProductsPage() {
     console.log("Cargando página de productos desde JSON...");
 
     try {
-        // 1. Buscamos los datos (ajusta la ruta si lo metes en una carpeta)
+        // 1. Buscamos los datos
         const response = await fetch('/data/productos.json');
 
         if (!response.ok) {
