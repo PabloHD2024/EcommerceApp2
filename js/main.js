@@ -97,11 +97,12 @@ function handleAddToCart(event) {
     const id = parseInt(button.getAttribute('data-id'));
     const name = button.getAttribute('data-name');
     const price = parseFloat(button.getAttribute('data-price'));
-    
+    const image = button.getAttribute('data-image');
+
     console.log("Botón clickeado - ID:", id, "Nombre:", name, "Precio:", price);
     
     if (id && name && price) {
-        addToCart({ id, name, price });
+        addToCart({ id, name, price, image });
     } else {
         console.error("Faltan datos en el botón:", button);
     }
@@ -205,7 +206,7 @@ productsList.innerHTML = allProducts.map(product => {
                 <span>(${reviews})</span>
             </div>
             <p class="price">$${precio.toLocaleString('es-AR')}</p>
-            <button class="btn-add" data-id="${product.id}" data-name="${nombre}" data-price="${precio}">
+           <button class="btn-add" data-id="${product.id}" data-name="${nombre}" data-price="${precio}" data-image="${imagen}">
                 <i class="fa-solid fa-cart-plus"></i> Añadir al carrito
             </button>
         </div>
