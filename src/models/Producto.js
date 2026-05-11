@@ -1,43 +1,35 @@
-class Producto {
-  constructor(id_producto, descripcion, stock, precio) { 
-    this.id_producto = id_producto;
-    this.descripcion = descripcion;
-    this.stock = stock;
-    this.precio = precio;
-  }
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
 
-  hayStock(cantidad) {
-    return this.stock >= cantidad;
-  }
-
-  reducirStock(cantidad) {
-    if (cantidad <= 0) {
-      throw new Error("La cantidad a reducir debe ser mayor a 0.");
+const Producto = sequelize.define('Producto', {
+    nombre: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    precio: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0
+    },
+    stock: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    categoria: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    image: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    rating: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0
+    },
+    reviews: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
     }
+});
 
-    if (!this.hayStock(cantidad)) {
-      throw new Error(`No hay stock suficiente para ${this.descripcion}.`);
-    }
-
-    this.stock -= cantidad;
-  }
-
-  aumentarStock(cantidad) {
-    if (cantidad <= 0) {
-      throw new Error("La cantidad a aumentar debe ser mayor a 0.");
-    }
-
-    this.stock += cantidad;
-  }
-
-  actualizarPrecio(nuevoPrecio) {
-    if (nuevoPrecio <= 0) {
-      throw new Error("El precio debe ser mayor a 0.");
-    }
-
-    this.precio = nuevoPrecio;
-  }
-
-}
-
-module.exports = { Producto };
+module.exports = Producto;

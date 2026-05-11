@@ -1,5 +1,8 @@
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
+const sequelize = require('./src/config/database');
 
 const productosRouter = require('./src/routes/productosRoutes');
 const categoriasRouter = require('./src/routes/categoriasRoutes');
@@ -9,7 +12,7 @@ const ticketsRouter = require('./src/routes/ticketsRoutes');
 const cuponRouter = require('./src/routes/cuponRoutes');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Permite que el servidor entienda datos en formato JSON
 app.use(express.json());
@@ -37,7 +40,15 @@ app.post('/api/checkout', (req, res) => {
     });
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
-});
+// Sincronizar base de datos y luego iniciar servidor
+sequelize.sync()
+    .then(() => {
+        console.log('✅ Base de datos conectada y sincronizada');
+
+        app.listen(PORT, () => {
+            console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+        });
+    })
+    .catch((error) => {
+        console.error('❌ Error de conexión con la base de datos:', error);
+    });
