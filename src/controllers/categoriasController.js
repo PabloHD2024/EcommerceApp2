@@ -1,5 +1,20 @@
 const categoriasDB = require('../data/categoriasData');
 
+const validarId = (id) => {
+    return Number.isInteger(id) && id > 0;
+};
+
+const validarTexto = (valor) => {
+    return typeof valor === 'string' && valor.trim().length > 0;
+};
+
+const existeCategoriaConNombre = (nombre, idActual = null) => {
+    return categoriasDB.some(cat =>
+        cat.nombre.toLowerCase() === nombre.trim().toLowerCase() &&
+        cat.id !== idActual
+    );
+};
+
 const categoriasController = {
     getAll: (req, res) => {
         res.json(categoriasDB);
@@ -7,6 +22,12 @@ const categoriasController = {
 
     getById: (req, res) => {
         const id = parseInt(req.params.id);
+
+        if (!validarId(id)) {
+            return res.status(400).json({
+                mensaje: "El id de la categoría debe ser un número entero positivo"
+            });
+        }
 
         const categoria = categoriasDB.find(cat => cat.id === id);
 
@@ -22,19 +43,25 @@ const categoriasController = {
     create: (req, res) => {
         const nuevaCategoria = req.body;
 
-        if (!nuevaCategoria.nombre) {
+        if (!validarTexto(nuevaCategoria.nombre)) {
             return res.status(400).json({
                 mensaje: "El nombre de la categoría es obligatorio"
             });
         }
 
+        if (existeCategoriaConNombre(nuevaCategoria.nombre)) {
+            return res.status(400).json({
+                mensaje: "Ya existe una categoría con ese nombre"
+            });
+        }
+
         const nuevoId = categoriasDB.length > 0
-            ? categoriasDB[categoriasDB.length - 1].id + 1
+            ? Math.max(...categoriasDB.map(cat => cat.id)) + 1
             : 1;
 
         const categoriaCreada = {
             id: nuevoId,
-            nombre: nuevaCategoria.nombre
+            nombre: nuevaCategoria.nombre.trim()
         };
 
         categoriasDB.push(categoriaCreada);
@@ -49,6 +76,12 @@ const categoriasController = {
         const id = parseInt(req.params.id);
         const datosActualizados = req.body;
 
+        if (!validarId(id)) {
+            return res.status(400).json({
+                mensaje: "El id de la categoría debe ser un número entero positivo"
+            });
+        }
+
         const categoria = categoriasDB.find(cat => cat.id === id);
 
         if (!categoria) {
@@ -57,7 +90,21 @@ const categoriasController = {
             });
         }
 
-        categoria.nombre = datosActualizados.nombre || categoria.nombre;
+        if (datosActualizados.nombre !== undefined) {
+            if (!validarTexto(datosActualizados.nombre)) {
+                return res.status(400).json({
+                    mensaje: "El nombre de la categoría no puede estar vacío"
+                });
+            }
+
+            if (existeCategoriaConNombre(datosActualizados.nombre, id)) {
+                return res.status(400).json({
+                    mensaje: "Ya existe una categoría con ese nombre"
+                });
+            }
+
+            categoria.nombre = datosActualizados.nombre.trim();
+        }
 
         res.json({
             mensaje: "Categoría actualizada correctamente",
@@ -67,6 +114,12 @@ const categoriasController = {
 
     remove: (req, res) => {
         const id = parseInt(req.params.id);
+
+        if (!validarId(id)) {
+            return res.status(400).json({
+                mensaje: "El id de la categoría debe ser un número entero positivo"
+            });
+        }
 
         const indiceCategoria = categoriasDB.findIndex(cat => cat.id === id);
 
