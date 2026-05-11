@@ -2,12 +2,12 @@ const categoriasDB = require('../data/categoriasData');
 
 const categoriasController = {
     getAll: (req, res) => {
+        // Devolver todas las categorías
         res.json(categoriasDB);
     },
 
     getById: (req, res) => {
         const id = parseInt(req.params.id);
-
         const categoria = categoriasDB.find(cat => cat.id === id);
 
         if (!categoria) {
@@ -34,7 +34,9 @@ const categoriasController = {
 
         const categoriaCreada = {
             id: nuevoId,
-            nombre: nuevaCategoria.nombre
+            nombre: nuevaCategoria.nombre,
+            descripcion: nuevaCategoria.descripcion || "",
+            icono: nuevaCategoria.icono || "fa-tag"
         };
 
         categoriasDB.push(categoriaCreada);
@@ -58,6 +60,8 @@ const categoriasController = {
         }
 
         categoria.nombre = datosActualizados.nombre || categoria.nombre;
+        categoria.descripcion = datosActualizados.descripcion || categoria.descripcion;
+        categoria.icono = datosActualizados.icono || categoria.icono;
 
         res.json({
             mensaje: "Categoría actualizada correctamente",
@@ -67,7 +71,6 @@ const categoriasController = {
 
     remove: (req, res) => {
         const id = parseInt(req.params.id);
-
         const indiceCategoria = categoriasDB.findIndex(cat => cat.id === id);
 
         if (indiceCategoria === -1) {

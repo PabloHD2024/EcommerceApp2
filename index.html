@@ -13,7 +13,13 @@
         <div class="logo-container">
             <p class="logo">Tienda<span>Online</span></p>
         </div>
-        <nav>
+        <!-- Botón hamburguesa (solo visible en móvil) -->
+        <div class="hamburger-menu" id="hamburger-menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <nav class="nav-menu" id="nav-menu">
             <ul>
                 <li><a href="./index.html">Inicio</a></li>
                 <li><a href="./html/productos.html">Productos</a></li>
@@ -88,6 +94,24 @@
                         <i class="fa-solid fa-cart-plus"></i> Añadir al carrito
                     </button>
                 </div>
+                <div class="product-card">
+                    <div class="product-image">
+                        <img src="./img/Auriculares Sony WH-1000XM5.png" alt="Auriculares Sony">
+                    </div>
+                    <h3>Auriculares Sony WH-100XM5</h3>
+                    <div class="rating">
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-solid fa-star"></i>
+                        <i class="fa-regular fa-star-half-stroke"></i>
+                        <span>(150)</span>
+                    </div>
+                    <p class="price">$65.990</p>
+                    <button class="btn-add" data-id="1" data-name="Freidora de Aire" data-price="89990">
+                        <i class="fa-solid fa-cart-plus"></i> Añadir al carrito
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -115,7 +139,7 @@
                 </div>
             </div>
             <div class="benefit">
-                <i class="fa-solid fa-shield-haltered"></i>
+                <i class="fa-solid fa-shield-halved"></i>
                 <div>
                     <h4>Compra segura</h4>
                     <p>Protegemos tus datos</p>

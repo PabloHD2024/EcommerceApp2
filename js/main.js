@@ -21,14 +21,14 @@ function updateCartCount() {
 // Función para obtener imagen del producto según ID
 function getProductImage(id) {
     const images = {
-        1: "../img/Freidora.png",
-        2: "../img/Smartwatch.png",
-        3: "../img/JBL.png",
-        4: "../img/Auriculares Sony WH-1000XM5.png",
-        5: "../img/24'' UHD (3840x2160) 4K IPS LED.png",
-        6: "../img/Teclado Mecánico RGB.png",
-        7: "../img/Notebook Cx Cx40082.jpeg",
-        8: "../img/Notebook Bangho Bes Pro T5 R5.jpeg"
+        1: "/img/Freidora.png",
+        2: "/img/Smartwatch.png",
+        3: "/img/JBL.png",
+        4: "/img/Auriculares Sony WH-1000XM5.png",
+        5: "/img/24'' UHD (3840x2160) 4K IPS LED.png",
+        6: "/img/Teclado Mecánico RGB.png",
+        7: "/img/Notebook Cx Cx40082.jpeg",
+        8: "/img/Notebook Bangho Bes Pro T5 R5.jpeg"
     };
     return images[id] || "https://via.placeholder.com/80x80?text=Producto";
 }
@@ -52,9 +52,9 @@ function showNotification(message) {
     }, 2000);
 }
 
-// Función para añadir producto al carrito (VERSIÓN CORREGIDA)
+// Función para añadir producto al carrito
 function addToCart(product) {
-    console.log("Añadiendo al carrito:", product); // Para debug
+    console.log("Añadiendo al carrito:", product);
     
     const existingProduct = cart.find(item => item.id === product.id);
     
@@ -75,25 +75,21 @@ function addToCart(product) {
     saveCart();
     showNotification(`✓ ${product.name} añadido al carrito`);
     
-    // Si estamos en cart.html, actualizar la vista
     if (typeof renderCart === 'function') {
         renderCart();
     }
 }
 
-// Función para manejar el click de añadir al carrito (VERSIÓN CORREGIDA)
+// Función para manejar el click de añadir al carrito
 function handleAddToCart(event) {
-    // Asegurarnos de obtener el botón correcto
     let button = event.target;
     
-    // Si el click fue en el ícono o en el texto, buscar el botón padre
     if (!button.classList.contains('btn-add')) {
         button = button.closest('.btn-add');
     }
     
     if (!button) return;
     
-    // Obtener los datos del producto
     const id = parseInt(button.getAttribute('data-id'));
     const name = button.getAttribute('data-name');
     const price = parseFloat(button.getAttribute('data-price'));
@@ -107,120 +103,89 @@ function handleAddToCart(event) {
     }
 }
 
-// ========== CARGAR PRODUCTOS EN LA PÁGINA productos.html ==========
+// Función para asignar eventos a todos los botones de añadir al carrito
+function bindAddToCartButtons() {
+    const allButtons = document.querySelectorAll('.btn-add');
+    console.log(`🔘 Asignando eventos a ${allButtons.length} botones "Añadir al carrito"`);
+    
+    allButtons.forEach(btn => {
+        btn.removeEventListener('click', handleAddToCart);
+        btn.addEventListener('click', handleAddToCart);
+    });
+}
 
 // ========== CARGAR PRODUCTOS EN LA PÁGINA productos.html ==========
 async function loadProductsPage() {
     const productsList = document.getElementById('products-list');
-    if (!productsList) return;
+    
+    if (!productsList) {
+        console.error("ERROR: No se encontró el elemento con id 'products-list'");
+        return;
+    }
 
-    /*console.log("Cargando página de productos desde JSON...");
-
-    try {
-        // 1. Buscamos los datos (ajusta la ruta si lo metes en una carpeta)
-        const response = await fetch('/data/productos.json');
-    */
-   console.log("Cargando página de productos desde la API...");
+    console.log("Cargando productos desde la API...");
 
     try {
         const response = await fetch('/api/productos');
+        
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
 
-        const allProducts = await response.json();
-    /*
-        // 2. Generar HTML para cada producto (usando los datos recibidos)
-        productsList.innerHTML = allProducts.map(product => {
-            // Lógica de estrellas
+        const products = await response.json();
+        console.log(`✅ ${products.length} productos recibidos`);
+
+        if (products.length === 0) {
+            productsList.innerHTML = '<p class="empty-message">No hay productos disponibles</p>';
+            return;
+        }
+
+        productsList.innerHTML = '';
+
+        products.forEach(product => {
             const fullStars = Math.floor(product.rating);
             const hasHalfStar = product.rating % 1 !== 0;
             let starsHTML = '';
-
+            
             for (let i = 0; i < fullStars; i++) {
                 starsHTML += '<i class="fa-solid fa-star"></i>';
             }
             if (hasHalfStar) {
                 starsHTML += '<i class="fa-regular fa-star-half-stroke"></i>';
             }
-            const emptyStars = 5 - Math.ceil(product.rating);
-            for (let i = 0; i < emptyStars; i++) {
+            for (let i = 0; i < 5 - Math.ceil(product.rating); i++) {
                 starsHTML += '<i class="fa-regular fa-star"></i>';
             }
-
-            return `
-                <div class="product-card">
-                    <div class="product-image">
-                        <img src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x200?text=Imagen+no+disponible'">
-                    </div>
-                    <h3>${product.name}</h3>
-                    <div class="rating">
-                        ${starsHTML}
-                        <span>(${product.reviews})</span>
-                    </div>
-                    <p class="price">$${product.price.toLocaleString('es-AR')}</p>
-                    <button class="btn-add" data-id="${product.id}" data-name="${product.name}" data-price="${product.price}">
-                        <i class="fa-solid fa-cart-plus"></i> Añadir al carrito
-                    </button>
+            
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card';
+            productCard.innerHTML = `
+                <div class="product-image">
+                    <img src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x200?text=Imagen+no+disponible'">
                 </div>
+                <h3>${product.name}</h3>
+                <div class="rating">
+                    ${starsHTML}
+                    <span>(${product.reviews})</span>
+                </div>
+                <p class="price">$${product.price.toLocaleString('es-AR')}</p>
+                <button class="btn-add" data-id="${product.id}" data-name="${product.name}" data-price="${product.price}">
+                    <i class="fa-solid fa-cart-plus"></i> Añadir al carrito
+                </button>
             `;
-        }).join('');
-    */
-
-    // 2. Generar HTML para cada producto usando los datos recibidos desde la API
-productsList.innerHTML = allProducts.map(product => {
-    const nombre = product.nombre || product.name;
-    const precio = product.precio || product.price;
-    const imagen = product.img || product.image || getProductImage(product.id);
-    const rating = product.rating || 4;
-    const reviews = product.reviews || 0;
-
-    // Lógica de estrellas
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-    let starsHTML = '';
-
-    for (let i = 0; i < fullStars; i++) {
-        starsHTML += '<i class="fa-solid fa-star"></i>';
-    }
-
-    if (hasHalfStar) {
-        starsHTML += '<i class="fa-regular fa-star-half-stroke"></i>';
-    }
-
-    const emptyStars = 5 - Math.ceil(rating);
-
-    for (let i = 0; i < emptyStars; i++) {
-        starsHTML += '<i class="fa-regular fa-star"></i>';
-    }
-
-    return `
-        <div class="product-card">
-            <div class="product-image">
-                <img src="${imagen}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/300x200?text=Imagen+no+disponible'">
-            </div>
-            <h3>${nombre}</h3>
-            <div class="rating">
-                ${starsHTML}
-                <span>(${reviews})</span>
-            </div>
-            <p class="price">$${precio.toLocaleString('es-AR')}</p>
-            <button class="btn-add" data-id="${product.id}" data-name="${nombre}" data-price="${precio}">
-                <i class="fa-solid fa-cart-plus"></i> Añadir al carrito
-            </button>
-        </div>
-    `;
-}).join('');
-
-        // 3. ASIGNAR EVENTOS (debe ir dentro del try, después de crear el HTML)
-        const btnsAdd = document.querySelectorAll('.btn-add');
-        btnsAdd.forEach(btn => {
+            
+            productsList.appendChild(productCard);
+        });
+        
+        document.querySelectorAll('.btn-add').forEach(btn => {
             btn.addEventListener('click', handleAddToCart);
         });
-
+        
+        console.log("✅ Productos mostrados correctamente");
+        
     } catch (error) {
-        console.error("Error detallado:", error);
-        productsList.innerHTML = `<p>Error al cargar los productos: ${error.message}</p>`;
+        console.error("❌ Error cargando productos:", error);
+        productsList.innerHTML = `<p class="error-message" style="color:red; text-align:center;">Error: ${error.message}</p>`;
     }
 }
 
@@ -271,13 +236,11 @@ function renderCart() {
         cartTotalSpan.textContent = `$${total.toLocaleString('es-AR')}`;
     }
     
-    // Agregar eventos a los botones de cantidad
     document.querySelectorAll('.btn-qty').forEach(btn => {
         btn.removeEventListener('click', handleQuantityChange);
         btn.addEventListener('click', handleQuantityChange);
     });
     
-    // Agregar eventos a los botones de eliminar
     document.querySelectorAll('.btn-remove').forEach(btn => {
         btn.removeEventListener('click', handleRemoveItem);
         btn.addEventListener('click', handleRemoveItem);
@@ -325,24 +288,23 @@ function emptyCart() {
     }
 }
 
-/*vieja 
-function checkout() {
+// Versión mejorada de checkout con soporte para cupón
+async function checkout(codigoCupon = null) {
     if (cart.length === 0) {
         showNotification('Tu carrito está vacío');
         return;
     }
-    alert('¡Gracias por tu compra! Pronto recibirás tu pedido.');
-    cart = [];
-    saveCart();
-    renderCart();
-    window.location.href = '../index.html';
-}
-*/
 
-async function checkout() {
-    if (cart.length === 0) {
-        showNotification('Tu carrito está vacío');
-        return;
+    let totalFinal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    if (codigoCupon) {
+        const resultado = await aplicarCupon(codigoCupon, totalFinal);
+        if (resultado.monto_final) {
+            totalFinal = resultado.monto_final;
+            showNotification(`¡Cupón aplicado! Ahorraste $${resultado.ahorro.toLocaleString('es-AR')}`);
+        } else {
+            showNotification(resultado.mensaje || "Cupón no válido");
+        }
     }
 
     try {
@@ -351,7 +313,11 @@ async function checkout() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(cart)
+            body: JSON.stringify({
+                carrito: cart,
+                total: totalFinal,
+                cupon_aplicado: codigoCupon || null
+            })
         });
 
         if (!response.ok) {
@@ -360,7 +326,7 @@ async function checkout() {
 
         const result = await response.json();
 
-        alert(result.mensaje || '¡Gracias por tu compra! Pronto recibirás tu pedido.');
+        alert(`¡Gracias por tu compra! Total: $${totalFinal.toLocaleString('es-AR')}\n${result.mensaje || ''}`);
 
         cart = [];
         saveCart();
@@ -374,34 +340,136 @@ async function checkout() {
     }
 }
 
+// Validar un cupón
+async function validarCupon(codigo) {
+    try {
+        const response = await fetch(`/api/cupones/validar/${codigo}`);
+        const data = await response.json();
+        console.log("Validación de cupón:", data);
+        return data;
+    } catch (error) {
+        console.error("Error al validar cupón:", error);
+        return { valido: false, mensaje: "Error al validar cupón" };
+    }
+}
+
+// Aplicar descuento
+async function aplicarCupon(codigo, monto) {
+    try {
+        const response = await fetch(`/api/cupones/aplicar/${codigo}?monto=${monto}`);
+        const data = await response.json();
+        console.log("Cupón aplicado:", data);
+        return data;
+    } catch (error) {
+        console.error("Error al aplicar cupón:", error);
+        return { mensaje: "Error al aplicar cupón" };
+    }
+}
+
+// Función para integrar cupón en el checkout
+async function aplicarCuponAlCarrito(codigoCupon) {
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const resultado = await aplicarCupon(codigoCupon, total);
+    
+    if (resultado.monto_final) {
+        showNotification(`¡Cupón aplicado! Ahorraste $${resultado.ahorro.toLocaleString('es-AR')}`);
+        return resultado.monto_final;
+    } else {
+        showNotification(resultado.mensaje || "Cupón no válido");
+        return total;
+    }
+}
+
+// ========== MENÚ HAMBURGUESA ==========
+function initHamburgerMenu() {
+    const hamburger = document.getElementById('hamburger-menu');
+    const navMenu = document.getElementById('nav-menu');
+    
+    console.log("Inicializando menú hamburguesa...");
+    console.log("hamburger:", hamburger);
+    console.log("navMenu:", navMenu);
+    
+    if (!hamburger || !navMenu) {
+        console.error("No se encontraron los elementos del menú hamburguesa");
+        return;
+    }
+    
+    // Crear overlay (fondo oscuro)
+    const overlay = document.createElement('div');
+    overlay.className = 'menu-overlay';
+    document.body.appendChild(overlay);
+    
+    // Función para abrir el menú
+    function openMenu() {
+        hamburger.classList.add('active');
+        navMenu.classList.add('active');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // Función para cerrar el menú
+    function closeMenu() {
+        hamburger.classList.remove('active');
+        navMenu.classList.remove('active');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Toggle del menú
+    hamburger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (navMenu.classList.contains('active')) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    });
+    
+    // Cerrar menú al hacer clic en el overlay
+    overlay.addEventListener('click', closeMenu);
+    
+    // Cerrar menú al hacer clic en un enlace
+    const navLinks = navMenu.querySelectorAll('a');
+    navLinks.forEach(link => {
+        link.addEventListener('click', closeMenu);
+    });
+    
+    // Cerrar menú al redimensionar la ventana
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768 && navMenu.classList.contains('active')) {
+            closeMenu();
+        }
+    });
+    
+    console.log("✅ Menú hamburguesa inicializado correctamente");
+}
+
 // ========== INICIALIZACIÓN ==========
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM cargado - Inicializando...");
     
-    // Actualizar contador del carrito
+    // Inicializar menú hamburguesa (PRIMERO)
+    initHamburgerMenu();
+    
     updateCartCount();
-    
-    // Cargar productos si estamos en productos.html
     loadProductsPage();
-    
-    // Renderizar carrito si estamos en cart.html
     renderCart();
+    bindAddToCartButtons();
     
-    // Botón vaciar carrito (si existe)
     const btnEmpty = document.getElementById('btn-empty');
     if (btnEmpty) {
         btnEmpty.removeEventListener('click', emptyCart);
         btnEmpty.addEventListener('click', emptyCart);
     }
     
-    // Botón finalizar compra (si existe)
     const btnCheckout = document.getElementById('btn-checkout');
     if (btnCheckout) {
         btnCheckout.removeEventListener('click', checkout);
-        btnCheckout.addEventListener('click', checkout);
+        btnCheckout.addEventListener('click', () => {
+            checkout(window.cuponAplicado || null);
+        });
     }
     
-    // Suscripción al newsletter (si existe en index.html)
     const subscribeForm = document.getElementById('subscribe-form');
     if (subscribeForm) {
         subscribeForm.addEventListener('submit', (e) => {
@@ -414,7 +482,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Formulario de contacto (si existe)
     const contactForm = document.querySelector('.contact-form');
     if (contactForm) {
         contactForm.addEventListener('submit', (e) => {
@@ -428,6 +495,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 contactForm.reset();
             } else {
                 showNotification('Por favor, completa todos los campos.');
+            }
+        });
+    }
+
+    const btnApplyCoupon = document.getElementById('btn-apply-coupon');
+    if (btnApplyCoupon) {
+        btnApplyCoupon.addEventListener('click', async () => {
+            const couponInput = document.getElementById('coupon-code');
+            const codigo = couponInput.value;
+            
+            if (!codigo) {
+                showNotification('Ingresa un código de cupón');
+                return;
+            }
+            
+            const totalActual = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const resultado = await aplicarCupon(parseInt(codigo), totalActual);
+            
+            const messageEl = document.getElementById('coupon-message');
+            if (resultado.monto_final) {
+                messageEl.style.color = 'green';
+                messageEl.textContent = `¡Cupón aplicado! Ahorraste $${resultado.ahorro.toLocaleString('es-AR')}`;
+                const cartTotalSpan = document.getElementById('cart-total');
+                if (cartTotalSpan) {
+                    cartTotalSpan.textContent = `$${resultado.monto_final.toLocaleString('es-AR')}`;
+                }
+                window.cuponAplicado = parseInt(codigo);
+            } else {
+                messageEl.style.color = 'red';
+                messageEl.textContent = resultado.mensaje || 'Cupón no válido';
             }
         });
     }
