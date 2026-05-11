@@ -5,6 +5,7 @@ const productosRouter = require('./src/routes/productosRoutes');
 const categoriasRouter = require('./src/routes/categoriasRoutes');
 const pedidoRouter = require('./src/routes/pedidoRoutes');
 const detallePedidoRouter = require('./src/routes/detallePedidoRoutes');
+const clientesRouter = require('./src/routes/clientesRoutes');
 
 const app = express();
 const PORT = 3000;
@@ -20,6 +21,7 @@ app.use('/api/productos', productosRouter);
 app.use('/api/categorias', categoriasRouter);
 app.use('/api/pedido', pedidoRouter);
 app.use('/api/detalle-pedido', detallePedidoRouter);
+app.use('/api/clientes', clientesRouter);
 
 app.post('/api/checkout', (req, res) => {
     const carritoRecibido = req.body;
