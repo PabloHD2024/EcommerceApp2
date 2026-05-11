@@ -3,15 +3,21 @@ const router = express.Router();
 
 const productosController = require('../controllers/productosController');
 
-// Verificar que el controlador existe y tiene los métodos
-console.log("Controlador cargado:", Object.keys(productosController));
+console.log('Controlador cargado:', Object.keys(productosController));
 
-// ORDEN CORRECTO: Rutas más específicas primero
+// Obtener todos los productos
 router.get('/', productosController.getAll);
-router.get('/categoria/:categoria', productosController.getByCategoria);
+
+// Obtener un producto por ID
 router.get('/:id', productosController.getById);
+
+// Crear un producto
 router.post('/', productosController.create);
+
+// Actualizar un producto
 router.put('/:id', productosController.update);
-router.delete('/:id', productosController.remove);
+
+// Eliminar un producto
+router.delete('/:id', productosController.delete);
 
 module.exports = router;
