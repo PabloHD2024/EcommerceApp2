@@ -4,12 +4,26 @@ const productosController = {
     getAll: async (req, res) => {
         try {
             const productos = await Producto.findAll();
-            res.json(productos);
+
+            const productosFormateados = productos.map(producto => ({
+                id: producto.id,
+                name: producto.nombre,
+                nombre: producto.nombre,
+                price: producto.precio,
+                precio: producto.precio,
+                stock: producto.stock,
+                categoria: producto.categoria,
+                image: producto.image,
+                rating: producto.rating,
+                reviews: producto.reviews
+            }));
+
+            res.json(productosFormateados);
         } catch (error) {
             console.error("ERROR REAL EN getAll PRODUCTOS:", error);
-            res.status(500).json({ 
+            res.status(500).json({
                 error: "Error al consultar la base de datos",
-                detalle: error.message 
+                detalle: error.message
             });
         }
     },
@@ -19,12 +33,23 @@ const productosController = {
             const producto = await Producto.findByPk(req.params.id);
 
             if (producto) {
-                res.json(producto);
+                res.json({
+                    id: producto.id,
+                    name: producto.nombre,
+                    nombre: producto.nombre,
+                    price: producto.precio,
+                    precio: producto.precio,
+                    stock: producto.stock,
+                    categoria: producto.categoria,
+                    image: producto.image,
+                    rating: producto.rating,
+                    reviews: producto.reviews
+                });
             } else {
                 res.status(404).json({ error: "Producto no encontrado" });
             }
         } catch (error) {
-            console.error(error);
+            console.error("ERROR REAL EN getById PRODUCTOS:", error);
             res.status(500).json({ error: "Error en el servidor" });
         }
     },
