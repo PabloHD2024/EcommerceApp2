@@ -4,19 +4,42 @@
     box-sizing: border-box;
 }
 
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #f57429;
+    --accent-color: #1a4ebe;
+    --success-color: #27ae60;
+    --danger-color: #e74c3c;
+    --light-color: #ecf0f1;
+    --dark-color: #2c3e50;
+    --gray-color: #7f8c8d;
+    --white: #fff;
+    --shadow: 0 2px 10px rgba(0,0,0,0.1);
+    --transition: all 0.3s ease;
+    --rating-color: #ffc107;
+    --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
 body {
-    background-color: #f4f4f4;
-    color: #333;
+    background-color: var(--light-color);
+    color: var(--light-color);
     font-family: 'Montserrat', sans-serif;
 }
 
+
+/* ========== HEADER BASE ========== */
 header {
+    background-color: var(--accent-color);
+    color: white;
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: var(--shadow);
     display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    background-color: #0e259a;
-    color: #fff;
-    padding: 10px 0;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .logo-container {
@@ -27,18 +50,18 @@ header {
 .logo {
     font-size: 2.1em;
     font-weight: bold;
-    color:#ff8800;
+    color:var(--secondary-color);
 }
 
 .logo span {
-    color: #fff;
+    color: var(--white);
 }
 
 nav {
     display: flex;
     flex-direction: row;
     justify-content: center;
-    padding: 20px 0;
+    padding: 10px;
 }
 
 nav ul {
@@ -49,29 +72,29 @@ nav ul {
 }
 
 nav ul li {
-    margin: 0 35px;
+    margin: 10px 20px;
 }
 
 nav ul li a {
-    color: #fff;
+    color: var(--white);
     text-decoration: none;
     font-weight: bold;
 }
 
 nav ul li a:hover {
-    color: #ff8800;
+    color: var(--secondary-color);
 }
 
 main {
-    padding: 20px 0 160px 0;
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
     min-height: calc(100vh - 160px);
 }
 
 .hero {
     text-align: center;
-    margin: 40px 0 0 0;
+    padding: 40px;
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));  
 }
 
 /* Botón del hero */
@@ -79,8 +102,8 @@ main {
     display: inline-block;
     margin-top: 1.5rem;
     padding: 0.8rem 2rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--background-gradient);
+    color: var(--white);
     text-decoration: none;
     border-radius: 50px;
     font-weight: bold;
@@ -95,7 +118,7 @@ main {
 /* Sección de productos destacados */
 .products-section {
     padding: 3rem 2rem;
-    max-width: 1200px;
+    max-width: 1600px;
     margin: 0 auto;
 }
 
@@ -103,7 +126,13 @@ main {
     text-align: center;
     font-size: 2rem;
     margin-bottom: 2rem;
-    color: #333;
+    color: var(--dark-color);
+}
+
+.product-title h1{
+    color: var(--accent-color);
+    text-align: center;
+    margin-top: 20px;
 }
 
 .product-grid {
@@ -114,7 +143,7 @@ main {
 }
 
 .product-card {
-    background: white;
+    background: var(--white);
     border-radius: 15px;
     overflow: hidden;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
@@ -149,30 +178,30 @@ main {
 .product-card h3 {
     margin: 1rem 0 0.5rem;
     font-size: 1.2rem;
-    color: #333;
+    color: var(--dark-color);
 }
 
 .rating {
-    color: #ffc107;
+    color: var(--rating-color);
     margin: 0.5rem 0;
     font-size: 0.9rem;
 }
 
 .rating span {
-    color: #666;
+    color: var(--gray-color);
     margin-left: 0.5rem;
 }
 
 .price {
     font-size: 1.5rem;
     font-weight: bold;
-    color: #667eea;
+    color: var(--accent-color);
     margin: 0.5rem 0;
 }
 
 .btn-add {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--background-gradient);
+    color: var(--white);
     border: none;
     padding: 0.7rem 1.5rem;
     border-radius: 50px;
@@ -200,6 +229,8 @@ main {
     gap: 1.5rem;
     padding: 3rem 2rem;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    max-width: 1600px;
+    margin: 0 auto;
 }
 
 .benefit {
@@ -207,9 +238,10 @@ main {
     align-items: center;
     gap: 1rem;
     padding: 1rem;
-    background: white;
+    background: var(--white);
     border-radius: 10px;
     transition: transform 0.3s ease;
+    align-self: auto;
 }
 
 .benefit:hover {
@@ -218,18 +250,18 @@ main {
 
 .benefit i {
     font-size: 2rem;
-    color: #667eea;
+    color: var(--dark-color);
 }
 
 .benefit h4 {
     margin: 0;
-    color: #333;
+    color: var(--dark-color);
     font-size: 1.1rem;
 }
 
 .benefit p {
     margin: 0.3rem 0 0;
-    color: #666;
+    color: var(--gray-color);
     font-size: 0.85rem;
 }
 
@@ -265,10 +297,10 @@ main {
 
 /* Newsletter */
 .newsletter {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--background-gradient);
     padding: 3rem 2rem;
     text-align: center;
-    color: white;
+    color: var(--white);
 }
 
 .newsletter-content {
@@ -307,8 +339,8 @@ main {
 }
 
 .subscribe-form button {
-    background: white;
-    color: #667eea;
+    background: var(--white);
+    color: var(--accent-color);
     border: none;
     padding: 0.8rem 1.5rem;
     border-radius: 50px;
@@ -334,7 +366,7 @@ main {
     bottom: 20px;
     right: 20px;
     background: #4caf50;
-    color: white;
+    color: var(--white);
     padding: 1rem 1.5rem;
     border-radius: 10px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -349,15 +381,19 @@ main {
 }
 
 .contact-container {
-    max-width: 700px;
+    max-width: 800px;
     display: flex;
     flex-direction: column;
     flex-wrap: wrap;
-    background: white;
-    padding: 30px;
+    background: var(--white);
+    padding: 45px;
     border-radius: 15px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     margin: 50px auto;
+}
+
+.contact-container h1 {
+    color: var(--accent-color);
 }
 
 .contact-form {
@@ -367,7 +403,7 @@ main {
 }
 
 .contact-description {
-    color: #57606f;
+    color: var(--gray-color);
     margin: 20px 0 20px 0;
     font-size: 1.1rem;
 }
@@ -377,7 +413,7 @@ input, textarea {
     border: 1px solid #c2c2c2;
     border-radius: 8px;
     font-size: 1rem;
-    color: #9b9b9b;
+    color: var(--gray-color);
     transition: border-color 0.2s;
 }
 
@@ -387,12 +423,12 @@ input, textarea {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 2rem;
     padding: 2rem;
-    max-width: 1200px;
+    max-width: 1500px;
     margin: 0 auto;
 }
 
 .product-list .product-card {
-    background: white;
+    background: var(--white);
     border-radius: 15px;
     overflow: hidden;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
@@ -429,19 +465,19 @@ input, textarea {
 .product-list .product-card h3 {
     margin: 1rem 0 0.5rem;
     font-size: 1.2rem;
-    color: #333;
+    color: var(--dark-color);
 }
 
 .product-list .price {
     font-size: 1.5rem;
     font-weight: bold;
-    color: #667eea;
+    color: var(--accent-color);
     margin: 0.5rem 0;
 }
 
 .product-list .btn-add {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--background-gradient);
+    color: var(--white);
     border: none;
     padding: 0.7rem 1.5rem;
     border-radius: 50px;
@@ -460,11 +496,17 @@ input, textarea {
 
 /* Contenedor principal del carrito */
 .cart-container {
-    background: white;
+    background: var(--white);
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    margin-top: 20px;
+    margin: 50px auto;
+    max-width: 1000px;
+}
+
+.cart-container h1 {
+    color: var(--accent-color);
+    padding: 30px;
 }
 
 .cart-item {
@@ -503,12 +545,12 @@ input, textarea {
 
 .item-info h3 {
     font-size: 1.1rem;
-    color: #333;
+    color: var(--dark-color);
     margin-bottom: 5px;
 }
 
 .item-unit-price {
-    color: #888;
+    color: var(--dark-color);
     font-size: 0.9rem;
 }
 
@@ -517,11 +559,12 @@ input, textarea {
     flex-direction: column;
     align-items: center;
     gap: 10px;
+    color: var(--dark-color);
 }
 
 .item-subtotal {
     font-weight: bold;
-    color: #ff8800;
+    color: var(--secondary-color);
     font-size: 1.1rem;
 }
 
@@ -529,7 +572,7 @@ input, textarea {
 .btn-remove {
     background: transparent;
     border: none;
-    color: #ff4757;
+    color: var(--danger-color);
     font-size: 1.2rem;
     cursor: pointer;
     transition: transform 0.2s;
@@ -558,7 +601,7 @@ input, textarea {
 
 footer {
     background-color: #333;
-    color: #fff;
+    color: var(--white);
     text-align: center;
     padding: 5px 0;
     /*position: fixed;*/
@@ -577,8 +620,8 @@ footer p span {
 }
 
 .btn-buy {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--background-gradient);
+    color: var(--white);
     border: none;
     padding: 0.7rem 1.5rem;
     border-radius: 50px;
@@ -596,8 +639,8 @@ footer p span {
 }
 
 .btn-empty {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: var(--background-gradient);
+    color: var(--white);
     border: none;
     padding: 0.7rem 1.5rem;
     border-radius: 50px;
@@ -623,7 +666,7 @@ footer p span {
 
 
 .btn-qty {
-    background: white;
+    background: var(--white);
     border: 1px solid #dfe4ea;
     width: 35px;
     height: 35px;
@@ -655,6 +698,94 @@ footer p span {
     -webkit-appearance: none;
     margin: 0;
 }
+
+.coupon-section {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.coupon-section input {
+    padding: 0.8rem;
+    border: 1px solid var(--gray-color);
+    border-radius: 5px;
+    font-size: 1rem;
+    flex: 1;
+    min-width: 150px;
+}
+
+.btn-secondary {
+    background-color: var(--accent-color);
+    color: var(--white);
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-secondary:hover {
+    background-color: var(--accent-color);
+}
+
+.coupon-message {
+    width: 100%;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    text-align: right;
+}
+
+/* ========== MENÚ HAMBURGUESA ========== */
+
+/* Ocultar botón hamburguesa en desktop */
+.hamburger-menu {
+    display: none;
+    cursor: pointer;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 30px;
+    height: 21px;
+    z-index: 1001;
+}
+
+.hamburger-menu span {
+    display: block;
+    width: 100%;
+    height: 3px;
+    background-color: white;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.nav-menu {
+    transition: right 0.3s ease;
+}
+
+/* Animación del botón cuando está activo (se convierte en X) */
+.hamburger-menu.active span:nth-child(1) {
+    transform: translateY(9px) rotate(45deg);
+}
+
+.hamburger-menu.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-menu.active span:nth-child(3) {
+    transform: translateY(-9px) rotate(-45deg);
+}
+
+/* Estilos para el nav en desktop */
+nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+/*-----------------------------------------------------------------*/
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -689,4 +820,88 @@ footer p span {
         grid-column: 3;
     }
 
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        position: relative;
+    }
+    
+    .logo-container {
+        margin-bottom: 0;
+        flex: 1;
+    }
+    
+    /* Mostrar botón hamburguesa en móvil */
+    .hamburger-menu {
+        display: flex;
+    }
+    
+    /* Menú oculto por defecto en móvil */
+    .nav-menu {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 70%;
+        max-width: 300px;
+        height: 100vh;
+        background-color: var(--primary-color);
+        box-shadow: -5px 0 15px rgba(0,0,0,0.2);
+        transition: right 0.3s ease;
+        z-index: 1000;
+        padding-top: 80px;
+    }
+    
+    /* Menú visible cuando tiene la clase active */
+    .nav-menu.active {
+        right: 0;
+    }
+
+     .hamburger-menu {
+        display: flex;
+        z-index: 1002;
+    }
+    
+    .nav-menu ul {
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+        padding: 2rem;
+    }
+    
+    .nav-menu ul li a {
+        font-size: 1.2rem;
+        padding: 0.8rem 1.5rem;
+        display: block;
+        color: var(--white);
+    }
+    
+    /* Overlay para cerrar el menú al hacer clic fuera */
+    .menu-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 999;
+        display: none;
+    }
+    
+    .menu-overlay.active {
+        display: block;
+    }
+
+}
+
+/* Ajustes para móviles muy pequeños */
+@media (max-width: 480px) {
+    .nav-menu {
+        width: 85%;
+    }
+    
+    .nav-menu ul li a {
+        font-size: 1rem;
+    }
 }

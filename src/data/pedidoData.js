@@ -1,10 +1,21 @@
 let pedidoDB = [
   {
     id: 1,
-    cliente: "Cliente de prueba",
-    fecha: "2026-05-09",
-    estado: "pendiente",
-    total: 875000
+    pedidoId: 1,
+    productoId: 1,
+    nombreProducto: "Notebook Lenovo",
+    cantidad: 1,
+    precioUnitario: 850000,
+    subtotal: 850000
+  },
+  {
+    id: 2,
+    pedidoId: 1,
+    productoId: 2,
+    nombreProducto: "Mouse inalámbrico",
+    cantidad: 1,
+    precioUnitario: 25000,
+    subtotal: 25000
   }
 ];
 

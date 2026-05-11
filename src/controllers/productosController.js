@@ -2,12 +2,19 @@ const productosDB = require('../data/productosData');
 
 const productosController = {
     getAll: (req, res) => {
-        res.json(productosDB);
+        const productosFrontend = productosDB.map(prod => ({
+            id: prod.id,
+            name: prod.nombre,
+            price: prod.precio,
+            image: prod.imagen,
+            rating: prod.rating,
+            reviews: prod.reviews
+        }));
+        res.json(productosFrontend);
     },
 
     getById: (req, res) => {
         const id = parseInt(req.params.id);
-
         const producto = productosDB.find(prod => prod.id === id);
 
         if (!producto) {
@@ -16,7 +23,16 @@ const productosController = {
             });
         }
 
-        res.json(producto);
+        res.json({
+            id: producto.id,
+            name: producto.nombre,
+            price: producto.precio,
+            image: producto.imagen,
+            rating: producto.rating,
+            reviews: producto.reviews,
+            stock: producto.stock,
+            categoria: producto.categoria
+        });
     },
 
     create: (req, res) => {
@@ -37,7 +53,10 @@ const productosController = {
             nombre: nuevoProducto.nombre,
             precio: nuevoProducto.precio,
             stock: nuevoProducto.stock,
-            categoria: nuevoProducto.categoria
+            categoria: nuevoProducto.categoria,
+            rating: nuevoProducto.rating || 0,
+            reviews: nuevoProducto.reviews || 0,
+            imagen: nuevoProducto.imagen || "/img/placeholder.png"
         };
 
         productosDB.push(productoCreado);
@@ -64,6 +83,9 @@ const productosController = {
         producto.precio = datosActualizados.precio || producto.precio;
         producto.stock = datosActualizados.stock || producto.stock;
         producto.categoria = datosActualizados.categoria || producto.categoria;
+        producto.imagen = datosActualizados.imagen || producto.imagen;
+        producto.rating = datosActualizados.rating || producto.rating;
+        producto.reviews = datosActualizados.reviews || producto.reviews;
 
         res.json({
             mensaje: "Producto actualizado correctamente",
@@ -73,7 +95,6 @@ const productosController = {
 
     remove: (req, res) => {
         const id = parseInt(req.params.id);
-
         const indiceProducto = productosDB.findIndex(prod => prod.id === id);
 
         if (indiceProducto === -1) {
@@ -87,7 +108,27 @@ const productosController = {
         res.json({
             mensaje: "Producto eliminado correctamente"
         });
-    }
+    },
+
+    getByCategoria: (req, res) => {
+        const categoriaNombre = req.params.categoria;
+        
+        const productosFiltrados = productosDB.filter(prod => 
+            prod.categoria.toLowerCase() === categoriaNombre.toLowerCase()
+        );
+        
+        const productosFrontend = productosFiltrados.map(prod => ({
+            id: prod.id,
+            name: prod.nombre,
+            price: prod.precio,
+            image: prod.imagen,
+            rating: prod.rating,
+            reviews: prod.reviews
+        }));
+        
+        res.json(productosFrontend);
+    }   
+
 };
 
 module.exports = productosController;
