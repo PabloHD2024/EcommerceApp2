@@ -1,70 +1,57 @@
-class Cupon {
-    constructor(id_cupon, descuento, fecha_vencimiento, limite_stock) {
-        this.id_cupon = id_cupon;
-        this.descuento = descuento;          // porcentaje de descuento (ej: 15 para 15%)
-        this.fecha_vencimiento = fecha_vencimiento; // formato 'YYYY-MM-DD'
-        this.limite_stock = limite_stock;    // cantidad máxima de usos
-        this.usos_actuales = 0;              // contador de usos
-        this.activo = true;                  // si está activo o no
-        this.created_at = new Date().toISOString();
-        this.updated_at = new Date().toISOString();
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database');
+
+const Cupon = sequelize.define('Cupon', {
+  descuento: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      min: 1,
+      max: 100
     }
-
-    // === GETTERS ===
-    getId() { return this.id_cupon; }
-    getDescuento() { return this.descuento; }
-    getFechaVencimiento() { return this.fecha_vencimiento; }
-    getLimiteStock() { return this.limite_stock; }
-    getUsosActuales() { return this.usos_actuales; }
-    isActivo() { return this.activo; }
-
-    // === MÉTODOS DE NEGOCIO ===
-
-    // Verificar si el cupón es válido (no vencido, no agotado, activo)
-    esValido() {
-        const hoy = new Date().toISOString().split('T')[0];
-        const noVencido = this.fecha_vencimiento >= hoy;
-        const noAgotado = this.usos_actuales < this.limite_stock;
-        return this.activo && noVencido && noAgotado;
+  },
+  fecha_vencimiento: {
+    type: DataTypes.DATEONLY,
+    allowNull: false
+  },
+  limite_stock: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      min: 1
     }
-
-    // Aplicar descuento a un monto
-    aplicarDescuento(monto) {
-        if (!this.esValido()) {
-            throw new Error('El cupón no es válido');
-        }
-        return monto - (monto * this.descuento / 100);
+  },
+  usos_actuales: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+    validate: {
+      min: 0
     }
+  },
+  activo: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  }
+}, {
+  tableName: 'Cupons'
+});
 
-    // Registrar un uso del cupón
-    registrarUso() {
-        if (!this.esValido()) {
-            throw new Error('El cupón no es válido');
-        }
-        this.usos_actuales++;
-        this.updated_at = new Date().toISOString();
-        return this.usos_actuales;
-    }
+Cupon.prototype.esValido = function () {
+  const hoy = new Date().toISOString().split('T')[0];
+  const noVencido = this.fecha_vencimiento >= hoy;
+  const noAgotado = this.usos_actuales < this.limite_stock;
 
-    // Desactivar cupón
-    desactivar() {
-        this.activo = false;
-        this.updated_at = new Date().toISOString();
-    }
+  return this.activo && noVencido && noAgotado;
+};
 
-    // Reactivar cupón
-    reactivar() {
-        this.activo = true;
-        this.updated_at = new Date().toISOString();
-    }
+Cupon.prototype.aplicarDescuento = function (monto) {
+  if (!this.esValido()) {
+    throw new Error('El cupón no es válido');
+  }
 
-    // Actualizar datos del cupón
-    actualizar(datos) {
-        if (datos.descuento !== undefined) this.descuento = datos.descuento;
-        if (datos.fecha_vencimiento !== undefined) this.fecha_vencimiento = datos.fecha_vencimiento;
-        if (datos.limite_stock !== undefined) this.limite_stock = datos.limite_stock;
-        this.updated_at = new Date().toISOString();
-    }
-}
+  return monto - (monto * this.descuento / 100);
+};
 
 module.exports = Cupon;
