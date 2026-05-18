@@ -1,186 +1,180 @@
-const DetallePedido = require('../models/DetallePedido');
-const Pedido = require('../models/Pedido');
-const Producto = require('../models/Producto');
+const detallePedidoDB = require('../data/detallePedidoData');
+const pedidoDB = require('../data/pedidoData');
+const productosDB = require('../data/productosData');
 
 const detallePedidoController = {
-  getAll: async (req, res) => {
-    try {
-      const detalles = await DetallePedido.findAll();
-      res.json(detalles);
-    } catch (error) {
-      res.status(500).json({ mensaje: 'Error al consultar los detalles de pedido', error: error.message });
-    }
+  getAll: (req, res) => {
+    res.json(detallePedidoDB);
   },
 
-  getById: async (req, res) => {
-    try {
-      const detalle = await DetallePedido.findByPk(req.params.id);
+  getById: (req, res) => {
+    const id = parseInt(req.params.id);
 
-      if (!detalle) {
-        return res.status(404).json({ mensaje: 'Detalle de pedido no encontrado' });
-      }
+    const detalle = detallePedidoDB.find(det => det.id === id);
 
-      res.json(detalle);
-    } catch (error) {
-      res.status(500).json({ mensaje: 'Error al consultar el detalle de pedido', error: error.message });
+    if (!detalle) {
+      return res.status(404).json({
+        mensaje: "Detalle de pedido no encontrado"
+      });
     }
+
+    res.json(detalle);
   },
 
-  getByPedidoId: async (req, res) => {
-    try {
-      const pedido = await Pedido.findByPk(req.params.pedidoId);
+  getByPedidoId: (req, res) => {
+    const pedidoId = parseInt(req.params.pedidoId);
 
-      if (!pedido) {
-        return res.status(404).json({ mensaje: 'Pedido no encontrado' });
-      }
+    const pedido = pedidoDB.find(ped => ped.id === pedidoId);
 
-      const detalles = await DetallePedido.findAll({
-        where: { pedidoId: req.params.pedidoId }
+    if (!pedido) {
+      return res.status(404).json({
+        mensaje: "Pedido no encontrado"
       });
-
-      res.json(detalles);
-    } catch (error) {
-      res.status(500).json({ mensaje: 'Error al consultar los detalles del pedido', error: error.message });
     }
+
+    const detalles = detallePedidoDB.filter(det => det.pedidoId === pedidoId);
+
+    res.json(detalles);
   },
 
-  create: async (req, res) => {
-    try {
-      const nuevoDetalle = req.body;
+  create: (req, res) => {
+    const nuevoDetalle = req.body;
 
-      if (!nuevoDetalle.pedidoId || !nuevoDetalle.productoId || !nuevoDetalle.cantidad) {
-        return res.status(400).json({ mensaje: 'Los campos pedidoId, productoId y cantidad son obligatorios' });
-      }
-
-      if (nuevoDetalle.cantidad <= 0) {
-        return res.status(400).json({ mensaje: 'La cantidad debe ser mayor a 0' });
-      }
-
-      const pedido = await Pedido.findByPk(nuevoDetalle.pedidoId);
-
-      if (!pedido) {
-        return res.status(404).json({ mensaje: 'Pedido no encontrado' });
-      }
-
-      const producto = await Producto.findByPk(nuevoDetalle.productoId);
-
-      if (!producto) {
-        return res.status(404).json({ mensaje: 'Producto no encontrado' });
-      }
-
-      if (producto.stock < nuevoDetalle.cantidad) {
-        return res.status(400).json({ mensaje: `No hay stock suficiente para el producto ${producto.nombre}` });
-      }
-
-      const subtotal = producto.precio * nuevoDetalle.cantidad;
-
-      const detalleCreado = await DetallePedido.create({
-        pedidoId: pedido.id,
-        productoId: producto.id,
-        nombreProducto: producto.nombre,
-        cantidad: nuevoDetalle.cantidad,
-        precioUnitario: producto.precio,
-        subtotal
+    if (!nuevoDetalle.pedidoId || !nuevoDetalle.productoId || !nuevoDetalle.cantidad) {
+      return res.status(400).json({
+        mensaje: "Los campos pedidoId, productoId y cantidad son obligatorios"
       });
-
-      await producto.update({
-        stock: producto.stock - nuevoDetalle.cantidad
-      });
-
-      await pedido.update({
-        total: pedido.total + subtotal
-      });
-
-      res.status(201).json({
-        mensaje: 'Detalle de pedido creado correctamente',
-        detalle: detalleCreado
-      });
-    } catch (error) {
-      res.status(500).json({ mensaje: 'Error al crear el detalle de pedido', error: error.message });
     }
+
+    const pedido = pedidoDB.find(ped => ped.id === parseInt(nuevoDetalle.pedidoId));
+
+    if (!pedido) {
+      return res.status(404).json({
+        mensaje: "Pedido no encontrado"
+      });
+    }
+
+    const producto = productosDB.find(prod => prod.id === parseInt(nuevoDetalle.productoId));
+
+    if (!producto) {
+      return res.status(404).json({
+        mensaje: "Producto no encontrado"
+      });
+    }
+
+    if (nuevoDetalle.cantidad <= 0) {
+      return res.status(400).json({
+        mensaje: "La cantidad debe ser mayor a 0"
+      });
+    }
+
+    if (producto.stock < nuevoDetalle.cantidad) {
+      return res.status(400).json({
+        mensaje: `No hay stock suficiente para el producto ${producto.nombre}`
+      });
+    }
+
+    const nuevoId = detallePedidoDB.length > 0
+      ? detallePedidoDB[detallePedidoDB.length - 1].id + 1
+      : 1;
+
+    const subtotal = producto.precio * nuevoDetalle.cantidad;
+
+    const detalleCreado = {
+      id: nuevoId,
+      pedidoId: pedido.id,
+      productoId: producto.id,
+      nombreProducto: producto.nombre,
+      cantidad: nuevoDetalle.cantidad,
+      precioUnitario: producto.precio,
+      subtotal: subtotal
+    };
+
+    detallePedidoDB.push(detalleCreado);
+
+    producto.stock -= nuevoDetalle.cantidad;
+    pedido.total += subtotal;
+
+    res.status(201).json({
+      mensaje: "Detalle de pedido creado correctamente",
+      detalle: detalleCreado
+    });
   },
 
-  update: async (req, res) => {
-    try {
-      const detalle = await DetallePedido.findByPk(req.params.id);
+  update: (req, res) => {
+    const id = parseInt(req.params.id);
+    const datosActualizados = req.body;
 
-      if (!detalle) {
-        return res.status(404).json({ mensaje: 'Detalle de pedido no encontrado' });
-      }
+    const detalle = detallePedidoDB.find(det => det.id === id);
 
-      if (!req.body.cantidad || req.body.cantidad <= 0) {
-        return res.status(400).json({ mensaje: 'La cantidad debe ser mayor a 0' });
-      }
-
-      const pedido = await Pedido.findByPk(detalle.pedidoId);
-      const producto = await Producto.findByPk(detalle.productoId);
-
-      if (!pedido || !producto) {
-        return res.status(404).json({ mensaje: 'Pedido o producto asociado no encontrado' });
-      }
-
-      const cantidadAnterior = detalle.cantidad;
-      const subtotalAnterior = detalle.subtotal;
-      const nuevaCantidad = req.body.cantidad;
-      const diferenciaCantidad = nuevaCantidad - cantidadAnterior;
-
-      if (diferenciaCantidad > 0 && producto.stock < diferenciaCantidad) {
-        return res.status(400).json({ mensaje: `No hay stock suficiente para aumentar la cantidad de ${producto.nombre}` });
-      }
-
-      const nuevoSubtotal = detalle.precioUnitario * nuevaCantidad;
-
-      await producto.update({
-        stock: producto.stock - diferenciaCantidad
+    if (!detalle) {
+      return res.status(404).json({
+        mensaje: "Detalle de pedido no encontrado"
       });
-
-      await detalle.update({
-        cantidad: nuevaCantidad,
-        subtotal: nuevoSubtotal
-      });
-
-      await pedido.update({
-        total: pedido.total - subtotalAnterior + nuevoSubtotal
-      });
-
-      res.json({
-        mensaje: 'Detalle de pedido actualizado correctamente',
-        detalle
-      });
-    } catch (error) {
-      res.status(500).json({ mensaje: 'Error al actualizar el detalle de pedido', error: error.message });
     }
+
+    if (!datosActualizados.cantidad || datosActualizados.cantidad <= 0) {
+      return res.status(400).json({
+        mensaje: "La cantidad debe ser mayor a 0"
+      });
+    }
+
+    const pedido = pedidoDB.find(ped => ped.id === detalle.pedidoId);
+    const producto = productosDB.find(prod => prod.id === detalle.productoId);
+
+    const subtotalAnterior = detalle.subtotal;
+    const cantidadAnterior = detalle.cantidad;
+
+    const diferenciaCantidad = datosActualizados.cantidad - cantidadAnterior;
+
+    if (diferenciaCantidad > 0 && producto.stock < diferenciaCantidad) {
+      return res.status(400).json({
+        mensaje: `No hay stock suficiente para aumentar la cantidad de ${producto.nombre}`
+      });
+    }
+
+    producto.stock -= diferenciaCantidad;
+
+    detalle.cantidad = datosActualizados.cantidad;
+    detalle.subtotal = detalle.precioUnitario * detalle.cantidad;
+
+    pedido.total = pedido.total - subtotalAnterior + detalle.subtotal;
+
+    res.json({
+      mensaje: "Detalle de pedido actualizado correctamente",
+      detalle: detalle
+    });
   },
 
-  remove: async (req, res) => {
-    try {
-      const detalle = await DetallePedido.findByPk(req.params.id);
+  remove: (req, res) => {
+    const id = parseInt(req.params.id);
 
-      if (!detalle) {
-        return res.status(404).json({ mensaje: 'Detalle de pedido no encontrado' });
-      }
+    const indiceDetalle = detallePedidoDB.findIndex(det => det.id === id);
 
-      const pedido = await Pedido.findByPk(detalle.pedidoId);
-      const producto = await Producto.findByPk(detalle.productoId);
-
-      if (pedido) {
-        await pedido.update({
-          total: pedido.total - detalle.subtotal
-        });
-      }
-
-      if (producto) {
-        await producto.update({
-          stock: producto.stock + detalle.cantidad
-        });
-      }
-
-      await detalle.destroy();
-
-      res.json({ mensaje: 'Detalle de pedido eliminado correctamente' });
-    } catch (error) {
-      res.status(500).json({ mensaje: 'Error al eliminar el detalle de pedido', error: error.message });
+    if (indiceDetalle === -1) {
+      return res.status(404).json({
+        mensaje: "Detalle de pedido no encontrado"
+      });
     }
+
+    const detalle = detallePedidoDB[indiceDetalle];
+
+    const pedido = pedidoDB.find(ped => ped.id === detalle.pedidoId);
+    const producto = productosDB.find(prod => prod.id === detalle.productoId);
+
+    if (pedido) {
+      pedido.total -= detalle.subtotal;
+    }
+
+    if (producto) {
+      producto.stock += detalle.cantidad;
+    }
+
+    detallePedidoDB.splice(indiceDetalle, 1);
+
+    res.json({
+      mensaje: "Detalle de pedido eliminado correctamente"
+    });
   }
 };
 
