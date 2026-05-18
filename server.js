@@ -2,6 +2,15 @@ require('dotenv').config();
 
 const express = require('express');
 const path = require('path');
+const sequelize = require('./src/config/database'); // ← Corregido: importar desde config
+
+// IMPORTAR LOS ROUTERS desde la ubicación correcta
+const productosRouter = require('./src/routes/productosRoutes');
+const categoriasRouter = require('./src/routes/categoriasRoutes');
+const pedidoRouter = require('./src/routes/pedidoRoutes');
+const detallePedidoRouter = require('./src/routes/detallePedidoRoutes');
+const ticketsRouter = require('./src/routes/ticketsRoutes');
+const cuponRouter = require('./src/routes/cuponRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;

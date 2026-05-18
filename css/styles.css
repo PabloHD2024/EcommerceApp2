@@ -363,18 +363,18 @@ main {
 /* Notificación flotante */
 .notification {
     position: fixed;
-    bottom: 700px;
+    bottom: 750px;
     right: 20px;
     background: var(--success-color);
     color: var(--white);
-    padding: 0.75rem 1.2rem;  /* Reducido de 1rem 1.5rem */
-    border-radius: 8px;        /* Reducido de 10px */
+    padding: 0.75rem 1.2rem;
+    border-radius: 10px;
     box-shadow: 0 3px 10px rgba(0,0,0,0.2);
     transform: translateX(calc(100% + 30px)); /*Desaparece la notificación por completo de la pantalla*/
     transition: transform 0.9s ease;
     z-index: 1000;
     font-weight: bold;
-    font-size: 0.9rem;         /* Texto más pequeño */
+    font-size: 1rem;
     max-width: auto;          /* Ancho máximo */
     width: auto;               /* Ancho automático */
     white-space: nowrap;       /* Evita que el texto se rompa */
