@@ -1,14 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
-const sequelize = require('./src/config/database');
-
-const productosRouter = require('./src/routes/productosRoutes');
-const categoriasRouter = require('./src/routes/categoriasRoutes');
-const pedidoRouter = require('./src/routes/pedidoRoutes');
-const detallePedidoRouter = require('./src/routes/detallePedidoRoutes');
-const ticketsRouter = require('./src/routes/ticketsRoutes');
-const cuponRouter = require('./src/routes/cuponRoutes');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
