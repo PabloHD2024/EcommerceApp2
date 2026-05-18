@@ -2,15 +2,15 @@
 
 Proyecto grupal desarrollado para la materia **Prácticas Profesionalizantes 2** del IFTS 16.
 
-El objetivo del proyecto es construir una aplicación de e-commerce utilizando **Node.js**, **Express** y una estructura backend organizada bajo el patrón **MVC**.
+El objetivo del proyecto es construir una aplicación de e-commerce utilizando **Node.js**, **Express**, **Sequelize** y **SQLite**, con una estructura backend organizada bajo el patrón **MVC**.
 
 ---
 
 ## Descripción del proyecto
 
-EcommerceApp2 es una aplicación web de tienda online que permite trabajar con productos, categorías y otras entidades propias de un sistema de ventas.
+EcommerceApp2 es una aplicación web de tienda online que permite trabajar con distintas entidades propias de un sistema de ventas, como productos, categorías, clientes, pedidos, detalles de pedido, tickets y cupones.
 
-En esta etapa del proyecto se implementó una API REST para manejar datos desde el backend. Actualmente se trabaja con datos en memoria, simulando una base de datos mediante arreglos JavaScript.
+En esta etapa del proyecto se implementó una **API REST** para manejar datos desde el backend. Algunas entidades ya cuentan con persistencia mediante **Sequelize + SQLite**, mientras que otras continúan en proceso de migración o mejora.
 
 ---
 
@@ -21,67 +21,33 @@ En esta etapa del proyecto se implementó una API REST para manejar datos desde 
 - JavaScript
 - Node.js
 - Express.js
+- Sequelize
+- SQLite
+- dotenv
 - Git
 - GitHub
 
 ---
 
-## Estructura del proyecto
-
-```text
-EcommerceApp2/
-├── css/
-├── html/
-├── img/
-├── js/
-├── src/
-│   ├── controllers/
-│   │   ├── categoriasController.js
-│   │   └── productosController.js
-│   ├── data/
-│   │   ├── categoriasData.js
-│   │   └── productosData.js
-│   ├── models/
-│   │   ├── cart.js
-│   │   ├── Cliente.js
-│   │   ├── DetallePedido.js
-│   │   ├── Pedido.js
-│   │   ├── Producto.js
-│   │   └── Ticket.js
-│   └── routes/
-│       ├── categoriasRoutes.js
-│       └── productosRoutes.js
-├── index.html
-├── package.json
-├── server.js
-├── .gitignore
-└── README.md
-```
-
----
-
-## Arquitectura MVC
+## Arquitectura del proyecto
 
 El proyecto utiliza una organización basada en el patrón **MVC**.
 
 ### Models
 
-Los modelos representan las entidades principales del sistema.
+Los modelos representan las entidades principales del sistema y se encuentran en:
 
-Se encuentran en:
-
-```text
 src/models/
-```
 
-Ejemplos:
+Modelos actuales:
 
-- `Producto.js`
-- `Cliente.js`
-- `Pedido.js`
-- `DetallePedido.js`
-- `Ticket.js`
-- `cart.js`
+- Producto.js
+- Cliente.js
+- Cupon.js
+- Pedido.js
+- DetallePedido.js
+- Ticket.js
+- cart.js
 
 ### Controllers
 
@@ -89,14 +55,17 @@ Los controladores contienen la lógica de cada recurso. Reciben la petición, pr
 
 Se encuentran en:
 
-```text
 src/controllers/
-```
 
-Ejemplos:
+Controladores actuales:
 
-- `productosController.js`
-- `categoriasController.js`
+- productosController.js
+- categoriasController.js
+- clientesController.js
+- cuponController.js
+- pedidoController.js
+- detallePedidoController.js
+- ticketsController.js
 
 ### Routes
 
@@ -104,29 +73,75 @@ Las rutas definen los endpoints de la API y conectan cada URL con su controlador
 
 Se encuentran en:
 
-```text
 src/routes/
-```
 
-Ejemplos:
+Rutas actuales:
 
-- `productosRoutes.js`
-- `categoriasRoutes.js`
+- productosRoutes.js
+- categoriasRoutes.js
+- clientesRoutes.js
+- cuponRoutes.js
+- pedidoRoutes.js
+- detallePedidoRoutes.js
+- ticketsRoutes.js
 
-### Data
+### Config
 
-La carpeta `data` contiene arreglos en memoria que simulan una base de datos temporal.
+La configuración de la base de datos se encuentra en:
 
-Se encuentra en:
+src/config/database.js
 
-```text
-src/data/
-```
+La conexión utiliza variables de entorno definidas en el archivo `.env`.
 
-Ejemplos:
+Ejemplo:
 
-- `productosData.js`
-- `categoriasData.js`
+PORT=3000
+DB_DIALECT=sqlite
+DB_STORAGE=./ecommerce.sqlite
+
+---
+
+## Estructura del proyecto
+
+EcommerceApp2/
+├── css/
+├── html/
+├── img/
+├── js/
+├── src/
+│   ├── config/
+│   │   └── database.js
+│   ├── controllers/
+│   │   ├── categoriasController.js
+│   │   ├── clientesController.js
+│   │   ├── cuponController.js
+│   │   ├── detallePedidoController.js
+│   │   ├── pedidoController.js
+│   │   ├── productosController.js
+│   │   └── ticketsController.js
+│   ├── data/
+│   ├── models/
+│   │   ├── cart.js
+│   │   ├── Cliente.js
+│   │   ├── Cupon.js
+│   │   ├── DetallePedido.js
+│   │   ├── Pedido.js
+│   │   ├── Producto.js
+│   │   └── Ticket.js
+│   └── routes/
+│       ├── categoriasRoutes.js
+│       ├── clientesRoutes.js
+│       ├── cuponRoutes.js
+│       ├── detallePedidoRoutes.js
+│       ├── pedidoRoutes.js
+│       ├── productosRoutes.js
+│       └── ticketsRoutes.js
+├── index.html
+├── package.json
+├── server.js
+├── .env
+├── .gitignore
+└── README.md
 
 ---
 
@@ -134,33 +149,31 @@ Ejemplos:
 
 ### 1. Clonar el repositorio
 
-```bash
 git clone https://github.com/PabloHD2024/EcommerceApp2.git
-```
 
 ### 2. Ingresar a la carpeta del proyecto
 
-```bash
 cd EcommerceApp2
-```
 
 ### 3. Instalar dependencias
 
-```bash
 npm install
-```
 
-### 4. Ejecutar el servidor
+### 4. Configurar variables de entorno
 
-```bash
+Crear un archivo `.env` en la raíz del proyecto con el siguiente contenido:
+
+PORT=3000
+DB_DIALECT=sqlite
+DB_STORAGE=./ecommerce.sqlite
+
+### 5. Ejecutar el servidor
+
 npm start
-```
 
 El servidor se ejecuta en:
 
-```text
 http://localhost:3000
-```
 
 ---
 
@@ -168,192 +181,154 @@ http://localhost:3000
 
 ### Productos
 
-#### Obtener todos los productos
-
-```http
 GET /api/productos
-```
-
-Respuesta esperada:
-
-```json
-[
-  {
-    "id": 1,
-    "nombre": "Notebook Lenovo",
-    "precio": 850000,
-    "stock": 10,
-    "categoria": "Tecnología"
-  }
-]
-```
-
-#### Obtener un producto por ID
-
-```http
 GET /api/productos/:id
-```
-
-Ejemplo:
-
-```http
-GET /api/productos/1
-```
-
-#### Crear un producto
-
-```http
 POST /api/productos
-```
+PUT /api/productos/:id
+DELETE /api/productos/:id
 
-Body ejemplo:
+Ejemplo de body para crear producto:
 
-```json
 {
   "nombre": "Teclado mecánico",
   "precio": 75000,
   "stock": 20,
   "categoria": "Tecnología"
 }
-```
-
-#### Actualizar un producto
-
-```http
-PUT /api/productos/:id
-```
-
-Body ejemplo:
-
-```json
-{
-  "precio": 82000,
-  "stock": 18
-}
-```
-
-#### Eliminar un producto
-
-```http
-DELETE /api/productos/:id
-```
 
 ---
 
 ### Categorías
 
-#### Obtener todas las categorías
-
-```http
 GET /api/categorias
-```
-
-Respuesta esperada:
-
-```json
-[
-  {
-    "id": 1,
-    "nombre": "Tecnología"
-  },
-  {
-    "id": 2,
-    "nombre": "Hogar"
-  },
-  {
-    "id": 3,
-    "nombre": "Audio"
-  }
-]
-```
-
-#### Obtener una categoría por ID
-
-```http
 GET /api/categorias/:id
-```
-
-Ejemplo:
-
-```http
-GET /api/categorias/1
-```
-
-#### Crear una categoría
-
-```http
 POST /api/categorias
-```
+PUT /api/categorias/:id
+DELETE /api/categorias/:id
 
-Body ejemplo:
+Ejemplo de body para crear categoría:
 
-```json
 {
   "nombre": "Gaming"
 }
-```
 
-#### Actualizar una categoría
+---
 
-```http
-PUT /api/categorias/:id
-```
+### Clientes
 
-Body ejemplo:
+GET /api/clientes
+GET /api/clientes/:id
+POST /api/clientes
+PUT /api/clientes/:id
+DELETE /api/clientes/:id
 
-```json
+Ejemplo de body para crear cliente:
+
 {
-  "nombre": "Gaming y accesorios"
+  "nombre": "Juan",
+  "apellido": "Perez",
+  "email": "juan.perez@mail.com",
+  "telefono": "1122334455",
+  "direccion": "Av. Corrientes 1234"
 }
-```
 
-#### Eliminar una categoría
+---
 
-```http
-DELETE /api/categorias/:id
-```
+### Cupones
+
+GET /api/cupones
+GET /api/cupones/:id
+POST /api/cupones
+PUT /api/cupones/:id
+DELETE /api/cupones/:id
+GET /api/cupones/validar/:codigo
+GET /api/cupones/aplicar/:codigo?monto=10000
+POST /api/cupones/:id/usar
+
+Ejemplo de body para crear cupón:
+
+{
+  "descuento": 15,
+  "fecha_vencimiento": "2026-12-31",
+  "limite_stock": 5
+}
+
+---
+
+### Pedidos
+
+GET /api/pedido
+GET /api/pedido/:id
+POST /api/pedido
+PUT /api/pedido/:id
+DELETE /api/pedido/:id
+
+---
+
+### Detalle de pedido
+
+GET /api/detalle-pedido
+GET /api/detalle-pedido/:id
+POST /api/detalle-pedido
+PUT /api/detalle-pedido/:id
+DELETE /api/detalle-pedido/:id
+
+---
+
+### Tickets
+
+GET /api/tickets
+GET /api/tickets/:id
+POST /api/tickets
+PUT /api/tickets/:id
+DELETE /api/tickets/:id
+
+---
+
+### Checkout
+
+POST /api/checkout
 
 ---
 
 ## Pruebas con PowerShell
 
-### Probar productos
+### Probar clientes
 
-```powershell
-Invoke-RestMethod http://localhost:3000/api/productos
-```
+Invoke-RestMethod http://localhost:3000/api/clientes
 
-```powershell
-Invoke-RestMethod http://localhost:3000/api/productos/1
-```
-
-### Crear un producto
-
-```powershell
-Invoke-RestMethod -Uri "http://localhost:3000/api/productos" `
+Invoke-RestMethod -Uri "http://localhost:3000/api/clientes" `
   -Method POST `
   -ContentType "application/json" `
-  -Body '{"nombre":"Teclado mecánico","precio":75000,"stock":20,"categoria":"Tecnología"}'
-```
+  -Body '{
+    "nombre": "Juan",
+    "apellido": "Perez",
+    "email": "juan.perez@mail.com",
+    "telefono": "1122334455",
+    "direccion": "Av. Corrientes 1234"
+  }'
 
-### Probar categorías
+---
 
-```powershell
-Invoke-RestMethod http://localhost:3000/api/categorias
-```
+### Probar cupones
 
-```powershell
-Invoke-RestMethod http://localhost:3000/api/categorias/1
-```
+Invoke-RestMethod http://localhost:3000/api/cupones
 
-### Crear una categoría
-
-```powershell
-Invoke-RestMethod -Uri "http://localhost:3000/api/categorias" `
+Invoke-RestMethod -Uri "http://localhost:3000/api/cupones" `
   -Method POST `
   -ContentType "application/json" `
-  -Body '{"nombre":"Gaming"}'
-```
+  -Body '{
+    "descuento": 15,
+    "fecha_vencimiento": "2026-12-31",
+    "limite_stock": 5
+  }'
+
+Invoke-RestMethod http://localhost:3000/api/cupones/validar/1
+
+Invoke-RestMethod "http://localhost:3000/api/cupones/aplicar/1?monto=10000"
+
+Invoke-RestMethod -Uri "http://localhost:3000/api/cupones/1/usar" `
+  -Method POST
 
 ---
 
@@ -363,11 +338,18 @@ Actualmente el proyecto cuenta con:
 
 - Servidor Express funcionando.
 - Frontend servido desde Express.
-- API REST para productos.
-- API REST para categorías.
-- Separación de responsabilidades usando estructura MVC.
-- Modelos del dominio organizados en `src/models`.
-- Datos temporales simulados en memoria.
+- API REST organizada por rutas y controladores.
+- Estructura MVC aplicada.
+- Conexión a base de datos SQLite mediante Sequelize.
+- Persistencia implementada en varias entidades del dominio.
+- CRUD de productos.
+- CRUD de categorías.
+- CRUD de clientes.
+- CRUD de cupones con validación, aplicación de descuento y registro de uso.
+- CRUD de pedidos.
+- CRUD de detalle de pedido.
+- CRUD de tickets.
+- Archivo `.env` para configuración.
 - Archivo `.gitignore` configurado.
 
 ---
@@ -376,14 +358,16 @@ Actualmente el proyecto cuenta con:
 
 Posibles mejoras futuras:
 
-- Agregar conexión a base de datos real.
-- Implementar persistencia de productos, categorías, clientes y pedidos.
+- Unificar completamente todas las entidades bajo Sequelize.
+- Agregar relaciones entre modelos.
+- Relacionar pedidos con clientes.
+- Relacionar detalle de pedido con productos y pedidos.
 - Agregar autenticación de usuarios.
 - Separar roles de cliente y administrador.
 - Implementar validaciones más completas.
-- Agregar endpoints para clientes, pedidos, cupones y tickets.
-- Mejorar el frontend para consumir todos los endpoints de la API.
 - Agregar manejo de errores centralizado.
+- Mejorar el frontend para consumir todos los endpoints de la API.
+- Agregar pruebas automatizadas.
 
 ---
 
@@ -397,6 +381,3 @@ Posibles mejoras futuras:
 
 ---
 
-## Notas
-
-Este proyecto forma parte de una entrega académica. La base de datos actual es temporal y funciona mediante arreglos en memoria, por lo que los datos creados durante la ejecución se pierden al reiniciar el servidor.
