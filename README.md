@@ -103,6 +103,7 @@ DB_STORAGE=./ecommerce.sqlite
 
 ## Estructura del proyecto
 
+```text
 EcommerceApp2/
 ├── css/
 ├── html/
@@ -122,6 +123,7 @@ EcommerceApp2/
 │   ├── data/
 │   ├── models/
 │   │   ├── cart.js
+│   │   ├── Categoria.js
 │   │   ├── Cliente.js
 │   │   ├── Cupon.js
 │   │   ├── DetallePedido.js
@@ -138,10 +140,13 @@ EcommerceApp2/
 │       └── ticketsRoutes.js
 ├── index.html
 ├── package.json
+├── package-lock.json
+├── seed_DB.js
 ├── server.js
 ├── .env
 ├── .gitignore
 └── README.md
+```
 
 ---
 
