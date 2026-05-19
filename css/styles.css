@@ -363,7 +363,7 @@ main {
 /* Notificación flotante */
 .notification {
     position: fixed;
-    bottom: 750px;
+    bottom: 640px;
     right: 20px;
     background: var(--success-color);
     color: var(--white);

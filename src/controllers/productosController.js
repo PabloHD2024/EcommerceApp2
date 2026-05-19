@@ -7,9 +7,7 @@ const productosController = {
 
             const productosFormateados = productos.map(producto => ({
                 id: producto.id,
-                name: producto.nombre,
                 nombre: producto.nombre,
-                price: producto.precio,
                 precio: producto.precio,
                 stock: producto.stock,
                 categoria: producto.categoria,
@@ -35,9 +33,7 @@ const productosController = {
             if (producto) {
                 res.json({
                     id: producto.id,
-                    name: producto.nombre,
                     nombre: producto.nombre,
-                    price: producto.precio,
                     precio: producto.precio,
                     stock: producto.stock,
                     categoria: producto.categoria,
