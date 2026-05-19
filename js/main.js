@@ -444,6 +444,110 @@ function initHamburgerMenu() {
     console.log("✅ Menú hamburguesa inicializado correctamente");
 }
 
+// ========== CARGAR PRODUCTOS DESTACADOS EN INDEX.HTML ==========
+async function loadFeaturedProducts() {
+    const featuredProducts = document.getElementById('featured-products');
+
+    if (!featuredProducts) {
+        return;
+    }
+
+    console.log("Cargando productos destacados desde la API...");
+
+    try {
+        const response = await fetch('/api/productos');
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const products = await response.json();
+
+        featuredProducts.innerHTML = '';
+
+        const destacados = products.slice(0, 4);
+
+        destacados.forEach(product => {
+            const stock = Number(product.stock) || 0;
+            const sinStock = stock === 0;
+
+            const nombre = product.name || product.nombre;
+            const precio = product.price || product.precio;
+            const imagen = product.image || product.imagen || getProductImage(product.id);
+            const rating = Number(product.rating) || 4;
+            const reviews = product.reviews || 0;
+
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 !== 0;
+            let starsHTML = '';
+
+            for (let i = 0; i < fullStars; i++) {
+                starsHTML += '<i class="fa-solid fa-star"></i>';
+            }
+
+            if (hasHalfStar) {
+                starsHTML += '<i class="fa-regular fa-star-half-stroke"></i>';
+            }
+
+            for (let i = 0; i < 5 - Math.ceil(rating); i++) {
+                starsHTML += '<i class="fa-regular fa-star"></i>';
+            }
+
+            const productCard = document.createElement('div');
+            productCard.className = `product-card ${sinStock ? 'opacity-75' : ''}`;
+
+            productCard.innerHTML = `
+                <div class="product-image">
+                    <img src="${imagen}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/300x200?text=Imagen+no+disponible'">
+                </div>
+
+                <h3>${nombre}</h3>
+
+                <div class="rating">
+                    ${starsHTML}
+                    <span>(${reviews})</span>
+                </div>
+
+                <p class="price">$${Number(precio).toLocaleString('es-AR')}</p>
+
+                <div class="stock-info">
+                    ${
+                        sinStock
+                            ? '<span class="badge bg-danger">Sin stock disponible</span>'
+                            : `<span class="badge bg-secondary">Disponibles: ${stock}</span>`
+                    }
+                </div>
+
+                <button 
+                    class="btn-add ${sinStock ? 'disabled' : ''}" 
+                    data-id="${product.id}" 
+                    data-name="${nombre}" 
+                    data-price="${precio}"
+                    ${sinStock ? 'disabled' : ''}
+                >
+                    <i class="fa-solid fa-cart-plus"></i> 
+                    ${sinStock ? 'Agotado' : 'Añadir al carrito'}
+                </button>
+            `;
+
+            featuredProducts.appendChild(productCard);
+        });
+
+        bindAddToCartButtons();
+
+        console.log("✅ Productos destacados cargados correctamente");
+
+    } catch (error) {
+        console.error("❌ Error cargando productos destacados:", error);
+
+        featuredProducts.innerHTML = `
+            <p class="error-message" style="color:red; text-align:center;">
+                Error al conectar con la base de datos de productos. Asegurate de tener el backend encendido.
+            </p>
+        `;
+    }
+}
+
 // ========== INICIALIZACIÓN ==========
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM cargado - Inicializando...");
@@ -529,3 +633,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+loadFeaturedProducts();
