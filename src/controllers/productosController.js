@@ -33,7 +33,9 @@ const productosController = {
             if (producto) {
                 res.json({
                     id: producto.id,
+                    name: producto.precio,
                     nombre: producto.nombre,
+                    price: producto.precio,
                     precio: producto.precio,
                     stock: producto.stock,
                     categoria: producto.categoria,
