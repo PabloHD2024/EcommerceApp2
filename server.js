@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const cors = require('cors');
+
 const express = require('express');
 const path = require('path');
 
@@ -15,6 +17,9 @@ const clientesRouter = require('./src/routes/clientesRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+//Permite peticiones desde el front:
+app.use(cors());
 
 // Permite que el servidor entienda datos en formato JSON
 app.use(express.json());
