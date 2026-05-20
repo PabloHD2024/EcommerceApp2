@@ -603,11 +603,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // const btnApplyCoupon = document.getElementById('btn-apply-coupon');
+    // if (btnApplyCoupon) {
+    //     btnApplyCoupon.addEventListener('click', async () => {
+    //         const couponInput = document.getElementById('coupon-code');
+    //         const codigo = couponInput.value;
+            
+    //         if (!codigo) {
+    //             showNotification('Ingresa un código de cupón');
+    //             return;
+    //         }
+            
+    //         const totalActual = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    //         const resultado = await aplicarCupon(parseInt(codigo), totalActual);
+            
+    //         const messageEl = document.getElementById('coupon-message');
+    //         if (resultado.monto_final) {
+    //             messageEl.style.color = 'green';
+    //             messageEl.textContent = `¡Cupón aplicado! Ahorraste $${resultado.ahorro.toLocaleString('es-AR')}`;
+    //             const cartTotalSpan = document.getElementById('cart-total');
+    //             if (cartTotalSpan) {
+    //                 cartTotalSpan.textContent = `$${resultado.monto_final.toLocaleString('es-AR')}`;
+    //             }
+    //             window.cuponAplicado = parseInt(codigo);
+    //         } else {
+    //             messageEl.style.color = 'red';
+    //             messageEl.textContent = resultado.mensaje || 'Cupón no válido';
+    //         }
+    //     });
+    // }
+
     const btnApplyCoupon = document.getElementById('btn-apply-coupon');
     if (btnApplyCoupon) {
         btnApplyCoupon.addEventListener('click', async () => {
             const couponInput = document.getElementById('coupon-code');
-            const codigo = couponInput.value;
+            // Eliminamos el parseInt() para enviar el string limpio
+            const codigo = couponInput.value.trim(); 
             
             if (!codigo) {
                 showNotification('Ingresa un código de cupón');
@@ -615,23 +646,47 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const totalActual = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            const resultado = await aplicarCupon(parseInt(codigo), totalActual);
+            
+            if (totalActual === 0) {
+                showNotification('El carrito está vacío');
+                return;
+            }
+            
+            // Enviamos el código como texto (el controlador ya se encarga de pasarlo a mayúsculas)
+            const resultado = await aplicarCupon(codigo, totalActual);
             
             const messageEl = document.getElementById('coupon-message');
-            if (resultado.monto_final) {
-                messageEl.style.color = 'green';
-                messageEl.textContent = `¡Cupón aplicado! Ahorraste $${resultado.ahorro.toLocaleString('es-AR')}`;
-                const cartTotalSpan = document.getElementById('cart-total');
-                if (cartTotalSpan) {
-                    cartTotalSpan.textContent = `$${resultado.monto_final.toLocaleString('es-AR')}`;
+            if (messageEl) {
+                if (resultado.monto_final !== undefined) {
+                    messageEl.style.color = 'green';
+                    messageEl.textContent = `¡Cupón aplicado! Ahorraste $${resultado.ahorro.toLocaleString('es-AR')}`;
+                    
+                    // Modificamos el contenedor del total para mostrar el descuento en pantalla
+                    const cartTotalSpan = document.getElementById('cart-total');
+                    if (cartTotalSpan) {
+                        cartTotalSpan.innerHTML = `
+                            <span style="text-decoration: line-through; font-size: 0.8em; color: gray; margin-right: 8px;">
+                                $${totalActual.toLocaleString('es-AR')}
+                            </span>
+                            $${resultado.monto_final.toLocaleString('es-AR')} 
+                            <small style="color: green; font-weight: bold;">(${resultado.descuento}% OFF)</small>
+                        `;
+                    }
+                    // Guardamos el código del cupón activo en la ventana global para usarlo al pagar
+                    window.cuponAplicado = codigo;
+                } else {
+                    messageEl.style.color = 'red';
+                    messageEl.textContent = resultado.mensaje || 'Cupón no válido';
+                    
+                    // Si falla, restauramos el total original de la pantalla
+                    const cartTotalSpan = document.getElementById('cart-total');
+                    if (cartTotalSpan) cartTotalSpan.textContent = `$${totalActual.toLocaleString('es-AR')}`;
+                    window.cuponAplicado = null;
                 }
-                window.cuponAplicado = parseInt(codigo);
-            } else {
-                messageEl.style.color = 'red';
-                messageEl.textContent = resultado.mensaje || 'Cupón no válido';
             }
         });
     }
+
 });
 
 loadFeaturedProducts();

@@ -22,7 +22,6 @@
 
 body {
     background-color: var(--light-color);
-    color: var(--light-color);
     font-family: 'Montserrat', sans-serif;
 }
 
@@ -95,6 +94,14 @@ main {
     text-align: center;
     padding: 40px;
     background: linear-gradient(135deg, var(--primary-color), var(--accent-color));  
+}
+
+.hero h1 {
+    color: var(--white);
+}
+
+.hero p {
+    color: var(--white);
 }
 
 /* Botón del hero */
@@ -917,6 +924,10 @@ nav ul {
 
     .notification.show {
     transform: translateX(0);
+    }
+
+    .info-section-container {
+        margin-top: 20px;
     }
 
     

@@ -45,10 +45,45 @@ const cuponController = {
     }
   },
 
+  // // GET /api/cupones/validar/:codigo
+  // validar: async (req, res) => {
+  //   try {
+  //     const cupon = await Cupon.findByPk(req.params.codigo);
+
+  //     if (!cupon) {
+  //       return res.status(404).json({
+  //         mensaje: 'Cupón no encontrado',
+  //         valido: false
+  //       });
+  //     }
+
+  //     const valido = cupon.esValido();
+
+  //     res.json({
+  //       id_cupon: cupon.id,
+  //       descuento: cupon.descuento,
+  //       valido,
+  //       mensaje: valido
+  //         ? 'Cupón válido'
+  //         : 'Cupón no válido (vencido, agotado o inactivo)'
+  //     });
+  //   } catch (error) {
+  //     res.status(500).json({
+  //       mensaje: 'Error al validar cupón',
+  //       detalle: error.message
+  //     });
+  //   }
+  // },
+
   // GET /api/cupones/validar/:codigo
   validar: async (req, res) => {
     try {
-      const cupon = await Cupon.findByPk(req.params.codigo);
+      // CAMBIO: Buscamos usando findOne y forzamos mayúsculas
+      const cupon = await Cupon.findOne({
+        where: {
+          codigo: req.params.codigo.toUpperCase().trim()
+        }
+      });
 
       if (!cupon) {
         return res.status(404).json({
@@ -61,6 +96,7 @@ const cuponController = {
 
       res.json({
         id_cupon: cupon.id,
+        codigo: cupon.codigo, // Opcional: sumamos el código a la respuesta
         descuento: cupon.descuento,
         valido,
         mensaje: valido
@@ -76,6 +112,51 @@ const cuponController = {
   },
 
   // GET /api/cupones/aplicar/:codigo?monto=100
+  // aplicar: async (req, res) => {
+  //   try {
+  //     const monto = parseFloat(req.query.monto);
+
+  //     if (!monto || monto <= 0) {
+  //       return res.status(400).json({
+  //         mensaje: "El parámetro 'monto' es requerido y debe ser mayor a 0"
+  //       });
+  //     }
+
+  //     const cupon = await Cupon.findByPk(req.params.codigo);
+
+  //     if (!cupon) {
+  //       return res.status(404).json({
+  //         mensaje: 'Cupón no encontrado'
+  //       });
+  //     }
+
+  //     if (!cupon.esValido()) {
+  //       return res.status(400).json({
+  //         mensaje: 'El cupón no es válido',
+  //         valido: false
+  //       });
+  //     }
+
+  //     const montoConDescuento = cupon.aplicarDescuento(monto);
+  //     const ahorro = monto - montoConDescuento;
+
+  //     res.json({
+  //       id_cupon: cupon.id,
+  //       descuento: cupon.descuento,
+  //       monto_original: monto,
+  //       monto_final: montoConDescuento,
+  //       ahorro,
+  //       mensaje: `¡Cupón aplicado! Ahorraste $${ahorro.toFixed(2)}`
+  //     });
+  //   } catch (error) {
+  //     res.status(500).json({
+  //       mensaje: 'Error al aplicar cupón',
+  //       detalle: error.message
+  //     });
+  //   }
+  // },
+
+  // GET /api/cupones/aplicar/:codigo?monto=100
   aplicar: async (req, res) => {
     try {
       const monto = parseFloat(req.query.monto);
@@ -86,7 +167,12 @@ const cuponController = {
         });
       }
 
-      const cupon = await Cupon.findByPk(req.params.codigo);
+      // CAMBIO: Buscamos usando findOne y forzamos mayúsculas
+      const cupon = await Cupon.findOne({
+        where: {
+          codigo: req.params.codigo.toUpperCase().trim()
+        }
+      });
 
       if (!cupon) {
         return res.status(404).json({
@@ -106,6 +192,7 @@ const cuponController = {
 
       res.json({
         id_cupon: cupon.id,
+        codigo: cupon.codigo,
         descuento: cupon.descuento,
         monto_original: monto,
         monto_final: montoConDescuento,
@@ -123,7 +210,7 @@ const cuponController = {
   // POST /api/cupones
   create: async (req, res) => {
     try {
-      const { descuento, fecha_vencimiento, limite_stock } = req.body;
+      const { codigo, descuento, fecha_vencimiento, limite_stock } = req.body;
 
       if (!descuento || !fecha_vencimiento || !limite_stock) {
         return res.status(400).json({
@@ -132,6 +219,7 @@ const cuponController = {
       }
 
       const cuponCreado = await Cupon.create({
+        codigo,
         descuento,
         fecha_vencimiento,
         limite_stock,

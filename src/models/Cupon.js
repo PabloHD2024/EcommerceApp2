@@ -2,6 +2,16 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
 const Cupon = sequelize.define('Cupon', {
+
+  codigo: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true,
+    set(val) {
+      if (val) this.setDataValue('codigo', val.toUpperCase().trim());
+    }
+  },
+
   descuento: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -10,10 +20,12 @@ const Cupon = sequelize.define('Cupon', {
       max: 100
     }
   },
+  
   fecha_vencimiento: {
     type: DataTypes.DATEONLY,
     allowNull: false
   },
+  
   limite_stock: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -21,6 +33,7 @@ const Cupon = sequelize.define('Cupon', {
       min: 1
     }
   },
+  
   usos_actuales: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -29,6 +42,7 @@ const Cupon = sequelize.define('Cupon', {
       min: 0
     }
   },
+  
   activo: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
