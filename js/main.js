@@ -513,8 +513,8 @@ async function loadFeaturedProducts() {
                 <div class="stock-info">
                     ${
                         sinStock
-                            ? '<span class="badge bg-danger">Sin stock disponible</span>'
-                            : `<span class="badge bg-secondary">Disponibles: ${stock}</span>`
+                            ? '<span class="stock-badge sin-stock">Sin stock disponible</span>'
+                            : `<span class="stock-badge con-stock">Disponibles: ${stock}</span>`
                     }
                 </div>
 

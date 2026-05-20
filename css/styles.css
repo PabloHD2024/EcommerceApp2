@@ -918,8 +918,32 @@ nav ul {
     .notification.show {
     transform: translateX(0);
     }
+
+    
+}
+/* Estado de stock en productos */
+.product-card .stock-info {
+  margin: 12px 0;
+  text-align: center;
 }
 
+.product-card .stock-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.product-card .stock-badge.sin-stock {
+  color: #dc3545 !important;
+  background-color: #fdecea;
+}
+
+.product-card .stock-badge.con-stock {
+  color: #198754 !important;
+  background-color: #e8f5ee;
+}
 /* Ajustes para móviles muy pequeños */
 @media (max-width: 480px) {
     .nav-menu {
@@ -930,3 +954,4 @@ nav ul {
         font-size: 1rem;
     }
 }
+
