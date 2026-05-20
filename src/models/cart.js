@@ -8,7 +8,7 @@ function renderCart() {
     cartItemsContainer.innerHTML = '';
     let total = 0;
 
-    if (cart.length === 0) {
+    if (cart.length === 0 ) {
         cartItemsContainer.innerHTML = '<div class="empty-msg">Tu carrito está vacío</div>';
     } else {
         cart.forEach((item, index) => {
