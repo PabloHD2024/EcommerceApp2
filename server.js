@@ -36,6 +36,8 @@ app.use('/api/tickets', ticketsRouter);
 app.use('/api/cupones', cuponRouter);
 app.use('/api/clientes', clientesRouter);
 
+app.use('/img', express.static(path.join(__dirname, 'img')));
+
 app.post('/api/checkout', (req, res) => {
   const carritoRecibido = req.body;
 

@@ -5,14 +5,33 @@ const sequelize = require('./src/config/database');
 const Producto = require('./src/models/Producto');
 
 const productosIniciales = [
-    { nombre: "Freidora de Aire 5L", precio: 89990, stock: 50, categoria: "Electrodomésticos", image: "/img/Freidora.png", rating: 4, reviews: 120 },
-    { nombre: "Smartwatch Pro", precio: 59990, stock: 30, categoria: "Tecnología", image: "/img/Smartwatch.png", rating: 5, reviews: 85 },
-    { nombre: "Parlante JBL Flip 6", precio: 129990, stock: 20, categoria: "Audio", image: "/img/JBL.png", rating: 4.5, reviews: 210 },
-    { nombre: "Auriculares Sony WH-1000XM5", precio: 349990, stock: 15, categoria: "Audio", image: "/img/Auriculares Sony WH-1000XM5.png", rating: 5, reviews: 45 },
-    { nombre: "Monitor LG 24' 4K", precio: 289990, stock: 10, categoria: "Tecnología", image: "/img/24'' UHD (3840x2160) 4K IPS LED.png", rating: 4, reviews: 67 },
-    { nombre: "Teclado Mecánico RGB", precio: 45990, stock: 40, categoria: "Tecnología", image: "/img/Teclado Mecánico RGB.png", rating: 4.5, reviews: 112 },
-    { nombre: "Notebook Cx Cx40082 AMD Ryzen 5 3500U 8Gb Ssd 256 15.6 Free Ips Fhd", precio: 749900, stock: 5, categoria: "Computación", image: "/img/Notebook Cx Cx40082.jpeg", rating: 4, reviews: 43 },
-    { nombre: "Notebook Bangho Bes Pro T5 R5 7430U 16Gb Ssd480 15.6 Fhd Free", precio: 999990, stock: 3, categoria: "Computación", image: "/img/Notebook Bangho Bes Pro T5 R5.jpeg", rating: 4.7, reviews: 149 }
+    { nombre: "Pava Eléctrica Corte Mate 1.7L", precio: 34990, stock: 45, categoria: "Electrodomésticos", image: "/img/Pava Electrica.png", rating: 4.5, reviews: 310 },
+    { nombre: "Cafetera Express 15 Bares", precio: 159990, stock: 15, categoria: "Electrodomésticos", image: "/img/Cafetera Express.png", rating: 4.8, reviews: 95 },
+    { nombre: "Licuadora de Mano 800W", precio: 42990, stock: 25, categoria: "Electrodomésticos", image: "/img/Licuadora Mano.png", rating: 4.2, reviews: 115 },
+    { nombre: "Tostadora Eléctrica para 2 Rebanadas", precio: 29990, stock: 35, categoria: "Electrodomésticos", image: "/img/Tostadora Electrica.png", rating: 4.0, reviews: 78 },
+    { nombre: "Microondas Digital 20L BGH", precio: 184990, stock: 12, categoria: "Electrodomésticos", image: "/img/Microondas BGH.png", rating: 4.6, reviews: 204 },
+    { nombre: "Aspiradora Robot Inteligente Wi-Fi", precio: 299990, stock: 8, categoria: "Electrodomésticos", image: "/img/Aspiradora Robot.png", rating: 4.4, reviews: 62 },
+    { nombre: "Balanza de Cocina Digital 5kg", precio: 12990, stock: 60, categoria: "Electrodomésticos", image: "/img/Balanza Cocina.png", rating: 4.7, reviews: 412 },
+    { nombre: "Exprimidor de Cítricos Eléctrico 1L", precio: 24990, stock: 40, categoria: "Electrodomésticos", image: "/img/Exprimidor Citricos.png", rating: 4.1, reviews: 88 },
+
+    // --- TECNOLOGÍA ---
+    { nombre: "Soporte Celular para Auto con Carga Inalámbrica", precio: 19990, stock: 50, categoria: "Tecnología", image: "/img/Soporte Celular Carga.png", rating: 4.3, reviews: 134 },
+    { nombre: "Tablet Lenovo Tab M10 Plus 10.6 Fhd", precio: 249990, stock: 14, categoria: "Tecnología", image: "/img/Tablet Lenovo Tab M10.png", rating: 4.5, reviews: 89 },
+    { nombre: "Aro de Luz LED 26cm con Trípode", precio: 15990, stock: 70, categoria: "Tecnología", image: "/img/Aro de Luz LED.png", rating: 4.0, reviews: 245 },
+    { nombre: "Cargador Portátil Powerbank 20000mAh", precio: 38990, stock: 40, categoria: "Tecnología", image: "/img/Powerbank 20000mAh.png", rating: 4.7, reviews: 198 },
+    { nombre: "Repetidor Wi-Fi TP-Link Extensor", precio: 22990, stock: 55, categoria: "Tecnología", image: "/img/Repetidor TP-Link.png", rating: 4.2, reviews: 340 },
+    { nombre: "Smart TV 43' Full HD Android", precio: 329990, stock: 7, categoria: "Tecnología", image: "/img/Smart TV 43.png", rating: 4.4, reviews: 156 },
+    { nombre: "Cámara de Seguridad Exterior Wi-Fi 1080p", precio: 45990, stock: 22, categoria: "Tecnología", image: "/img/Camara Seguridad Exterior.png", rating: 4.5, reviews: 112 },
+
+    // --- COMPUTACIÓN ---
+    { nombre: "Mouse Óptico Inalámbrico Logitech M280", precio: 18990, stock: 80, categoria: "Computación", image: "/img/Mouse Logitech M280.png", rating: 4.8, reviews: 520 },
+    { nombre: "Disco Sólido Interno SSD Kingston 480Gb", precio: 39990, stock: 35, categoria: "Computación", image: "/img/SSD Kingston 480Gb.png", rating: 4.9, reviews: 610 },
+    { nombre: "Memoria RAM DDR4 8Gb Fury 3200MHz", precio: 28990, stock: 42, categoria: "Computación", image: "/img/RAM DDR4 8Gb Fury.png", rating: 4.8, reviews: 289 },
+    { nombre: "Webcam Full HD 1080p con Micrófono", precio: 31990, stock: 28, categoria: "Computación", image: "/img/Webcam Full HD.png", rating: 4.1, reviews: 73 },
+    { nombre: "Hub USB-C de 4 Puertos de Aluminio", precio: 14990, stock: 65, categoria: "Computación", image: "/img/Hub USB-C 4 Puertos.png", rating: 4.3, reviews: 142 },
+    { nombre: "Router Gamer TP-Link Archer AC1200", precio: 64990, stock: 18, categoria: "Computación", image: "/img/Router TP-Link Archer.png", rating: 4.6, reviews: 97 },
+    { nombre: "Gabinete Kit Mid Tower con Fuente 500W", precio: 54990, stock: 15, categoria: "Computación", image: "/img/Gabinete Kit Mid Tower.png", rating: 3.9, reviews: 54 },
+    { nombre: "Pad Mouse Gamer Extendido 90x40cm", precio: 12500, stock: 100, categoria: "Computación", image: "/img/Pad Mouse Gamer.png", rating: 4.7, reviews: 315 },
 ];
 
 async function seedDatabase() {
