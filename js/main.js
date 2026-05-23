@@ -1,36 +1,24 @@
 // ========== CARRITO DE COMPRAS ==========
 
-// Cargar carrito del localStorage
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
+// Función para obtener el carrito actual
+function getCart() {
+    return JSON.parse(localStorage.getItem('cart')) || [];
+}
 
 // Función para guardar carrito en localStorage
-function saveCart() {
+function saveCart(cart) {
     localStorage.setItem('cart', JSON.stringify(cart));
     updateCartCount();
 }
 
 // Función para actualizar el contador del carrito
 function updateCartCount() {
+    const cart = getCart();
     const cartCountElements = document.querySelectorAll('#cart-count');
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
     cartCountElements.forEach(el => {
         if (el) el.textContent = totalItems;
     });
-}
-
-// Función para obtener imagen del producto según ID
-function getProductImage(id) {
-    const images = {
-        1: "/img/Freidora.png",
-        2: "/img/Smartwatch.png",
-        3: "/img/JBL.png",
-        4: "/img/Auriculares Sony WH-1000XM5.png",
-        5: "/img/24'' UHD (3840x2160) 4K IPS LED.png",
-        6: "/img/Teclado Mecánico RGB.png",
-        7: "/img/Notebook Cx Cx40082.jpeg",
-        8: "/img/Notebook Bangho Bes Pro T5 R5.jpeg"
-    };
-    return images[id] || "https://via.placeholder.com/80x80?text=Producto";
 }
 
 // Función para mostrar notificación
@@ -53,29 +41,30 @@ function showNotification(message) {
 }
 
 // Función para añadir producto al carrito
-function addToCart(product) {
-    console.log("Añadiendo al carrito:", product);
+function addToCart(producto) {
+    let cart = getCart();
     
-    const existingProduct = cart.find(item => item.id === product.id);
+    console.log("Añadiendo al carrito:", producto);
+    
+    const existingProduct = cart.find(item => item.id === producto.id);
     
     if (existingProduct) {
         existingProduct.quantity += 1;
-        console.log("Producto existente, nueva cantidad:", existingProduct.quantity);
     } else {
         cart.push({
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            quantity: 1,
-            image: product.image || getProductImage(product.id)
+            id: producto.id,
+            name: producto.name,
+            price: producto.price,
+            image: producto.image || `/img/${producto.name.replace(/\s/g, '')}.png`,
+            quantity: 1
         });
-        console.log("Nuevo producto añadido:", product.name);
     }
     
-    saveCart();
-    showNotification(`✓ ${product.name} añadido al carrito`);
+    saveCart(cart);
+    showNotification(`✓ ${producto.name} añadido al carrito`);
     
-    if (typeof renderCart === 'function') {
+    // Si estamos en la página del carrito, actualizar la vista
+    if (typeof renderCart === 'function' && document.getElementById('cart-items')) {
         renderCart();
     }
 }
@@ -93,11 +82,12 @@ function handleAddToCart(event) {
     const id = parseInt(button.getAttribute('data-id'));
     const name = button.getAttribute('data-name');
     const price = parseFloat(button.getAttribute('data-price'));
+    const image = button.getAttribute('data-image');
     
     console.log("Botón clickeado - ID:", id, "Nombre:", name, "Precio:", price);
     
     if (id && name && price) {
-        addToCart({ id, name, price });
+        addToCart({ id, name, price, image });
     } else {
         console.error("Faltan datos en el botón:", button);
     }
@@ -119,7 +109,7 @@ async function loadProductsPage() {
     const productsList = document.getElementById('products-list');
     
     if (!productsList) {
-        console.error("ERROR: No se encontró el elemento con id 'products-list'");
+        console.log("No estamos en la página de productos");
         return;
     }
 
@@ -169,7 +159,7 @@ async function loadProductsPage() {
                     <span>(${product.reviews})</span>
                 </div>
                 <p class="price">$${product.price.toLocaleString('es-AR')}</p>
-                <button class="btn-add" data-id="${product.id}" data-name="${product.name}" data-price="${product.price}">
+                <button class="btn-add" data-id="${product.id}" data-name="${product.name}" data-price="${product.price}" data-image="${product.image}">
                     <i class="fa-solid fa-cart-plus"></i> Añadir al carrito
                 </button>
             `;
@@ -177,9 +167,7 @@ async function loadProductsPage() {
             productsList.appendChild(productCard);
         });
         
-        document.querySelectorAll('.btn-add').forEach(btn => {
-            btn.addEventListener('click', handleAddToCart);
-        });
+        bindAddToCartButtons();
         
         console.log("✅ Productos mostrados correctamente");
         
@@ -195,6 +183,8 @@ function renderCart() {
     const cartTotalSpan = document.getElementById('cart-total');
     
     if (!cartItemsContainer) return;
+    
+    const cart = getCart();
     
     if (cart.length === 0) {
         cartItemsContainer.innerHTML = '<p class="empty-cart" style="text-align: center; padding: 40px;">Tu carrito está vacío</p>';
@@ -212,7 +202,7 @@ function renderCart() {
         const itemElement = document.createElement('div');
         itemElement.className = 'cart-item';
         itemElement.innerHTML = `
-            <img src="${item.image || getProductImage(item.id)}" alt="${item.name}">
+            <img src="..${item.image}" alt="${item.name}" onerror="this.src='../img/placeholder.png'">
             <div class="item-info">
                 <h3>${item.name}</h3>
                 <p class="item-unit-price">Precio unitario: $${item.price.toLocaleString('es-AR')}</p>
@@ -261,6 +251,7 @@ function handleRemoveItem(event) {
 }
 
 function updateQuantity(index, change) {
+    let cart = getCart();
     if (cart[index]) {
         const newQuantity = cart[index].quantity + change;
         if (newQuantity <= 0) {
@@ -268,21 +259,21 @@ function updateQuantity(index, change) {
         } else {
             cart[index].quantity = newQuantity;
         }
-        saveCart();
+        saveCart(cart);
         renderCart();
     }
 }
 
 function removeFromCart(index) {
+    let cart = getCart();
     cart.splice(index, 1);
-    saveCart();
+    saveCart(cart);
     renderCart();
 }
 
 function emptyCart() {
     if (confirm('¿Estás seguro de que quieres vaciar el carrito?')) {
-        cart = [];
-        saveCart();
+        saveCart([]);
         renderCart();
         showNotification('Carrito vaciado');
     }
@@ -290,6 +281,8 @@ function emptyCart() {
 
 // Versión mejorada de checkout con soporte para cupón
 async function checkout(codigoCupon = null) {
+    const cart = getCart();
+    
     if (cart.length === 0) {
         showNotification('Tu carrito está vacío');
         return;
@@ -328,8 +321,7 @@ async function checkout(codigoCupon = null) {
 
         alert(`¡Gracias por tu compra! Total: $${totalFinal.toLocaleString('es-AR')}\n${result.mensaje || ''}`);
 
-        cart = [];
-        saveCart();
+        saveCart([]);
         renderCart();
 
         window.location.href = '../index.html';
@@ -368,6 +360,7 @@ async function aplicarCupon(codigo, monto) {
 
 // Función para integrar cupón en el checkout
 async function aplicarCuponAlCarrito(codigoCupon) {
+    const cart = getCart();
     const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const resultado = await aplicarCupon(codigoCupon, total);
     
@@ -473,7 +466,7 @@ async function loadFeaturedProducts() {
 
             const nombre = product.name || product.nombre;
             const precio = product.price || product.precio;
-            const imagen = product.image || product.imagen || getProductImage(product.id);
+            const imagen = product.image || product.imagen;
             const rating = Number(product.rating) || 4;
             const reviews = product.reviews || 0;
 
@@ -523,6 +516,7 @@ async function loadFeaturedProducts() {
                     data-id="${product.id}" 
                     data-name="${nombre}" 
                     data-price="${precio}"
+                    data-image="${imagen}"
                     ${sinStock ? 'disabled' : ''}
                 >
                     <i class="fa-solid fa-cart-plus"></i> 
@@ -552,20 +546,31 @@ async function loadFeaturedProducts() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM cargado - Inicializando...");
     
-    // Inicializar menú hamburguesa (PRIMERO)
+    // Inicializar menú hamburguesa
     initHamburgerMenu();
     
+    // Actualizar contador del carrito
     updateCartCount();
+    
+    // Cargar productos si estamos en la página de productos
     loadProductsPage();
-    renderCart();
+    
+    // Renderizar carrito si estamos en la página del carrito
+    if (document.getElementById('cart-items')) {
+        renderCart();
+    }
+    
+    // Asignar eventos a botones
     bindAddToCartButtons();
     
+    // Botón vaciar carrito
     const btnEmpty = document.getElementById('btn-empty');
     if (btnEmpty) {
         btnEmpty.removeEventListener('click', emptyCart);
         btnEmpty.addEventListener('click', emptyCart);
     }
     
+    // Botón checkout
     const btnCheckout = document.getElementById('btn-checkout');
     if (btnCheckout) {
         btnCheckout.removeEventListener('click', checkout);
@@ -574,6 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Formulario de suscripción
     const subscribeForm = document.getElementById('subscribe-form');
     if (subscribeForm) {
         subscribeForm.addEventListener('submit', (e) => {
@@ -586,6 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
+    // Formulario de contacto
     const contactForm = document.querySelector('.contact-form');
     if (contactForm) {
         contactForm.addEventListener('submit', (e) => {
@@ -603,48 +610,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // const btnApplyCoupon = document.getElementById('btn-apply-coupon');
-    // if (btnApplyCoupon) {
-    //     btnApplyCoupon.addEventListener('click', async () => {
-    //         const couponInput = document.getElementById('coupon-code');
-    //         const codigo = couponInput.value;
-            
-    //         if (!codigo) {
-    //             showNotification('Ingresa un código de cupón');
-    //             return;
-    //         }
-            
-    //         const totalActual = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    //         const resultado = await aplicarCupon(parseInt(codigo), totalActual);
-            
-    //         const messageEl = document.getElementById('coupon-message');
-    //         if (resultado.monto_final) {
-    //             messageEl.style.color = 'green';
-    //             messageEl.textContent = `¡Cupón aplicado! Ahorraste $${resultado.ahorro.toLocaleString('es-AR')}`;
-    //             const cartTotalSpan = document.getElementById('cart-total');
-    //             if (cartTotalSpan) {
-    //                 cartTotalSpan.textContent = `$${resultado.monto_final.toLocaleString('es-AR')}`;
-    //             }
-    //             window.cuponAplicado = parseInt(codigo);
-    //         } else {
-    //             messageEl.style.color = 'red';
-    //             messageEl.textContent = resultado.mensaje || 'Cupón no válido';
-    //         }
-    //     });
-    // }
-
+    // Botón aplicar cupón
     const btnApplyCoupon = document.getElementById('btn-apply-coupon');
     if (btnApplyCoupon) {
         btnApplyCoupon.addEventListener('click', async () => {
             const couponInput = document.getElementById('coupon-code');
-            // Eliminamos el parseInt() para enviar el string limpio
-            const codigo = couponInput.value.trim(); 
+            const codigo = couponInput.value.trim();
             
             if (!codigo) {
                 showNotification('Ingresa un código de cupón');
                 return;
             }
             
+            const cart = getCart();
             const totalActual = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             
             if (totalActual === 0) {
@@ -652,7 +630,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
-            // Enviamos el código como texto (el controlador ya se encarga de pasarlo a mayúsculas)
             const resultado = await aplicarCupon(codigo, totalActual);
             
             const messageEl = document.getElementById('coupon-message');
@@ -661,7 +638,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     messageEl.style.color = 'green';
                     messageEl.textContent = `¡Cupón aplicado! Ahorraste $${resultado.ahorro.toLocaleString('es-AR')}`;
                     
-                    // Modificamos el contenedor del total para mostrar el descuento en pantalla
                     const cartTotalSpan = document.getElementById('cart-total');
                     if (cartTotalSpan) {
                         cartTotalSpan.innerHTML = `
@@ -672,21 +648,23 @@ document.addEventListener('DOMContentLoaded', () => {
                             <small style="color: green; font-weight: bold;">(${resultado.descuento}% OFF)</small>
                         `;
                     }
-                    // Guardamos el código del cupón activo en la ventana global para usarlo al pagar
                     window.cuponAplicado = codigo;
                 } else {
                     messageEl.style.color = 'red';
                     messageEl.textContent = resultado.mensaje || 'Cupón no válido';
                     
-                    // Si falla, restauramos el total original de la pantalla
                     const cartTotalSpan = document.getElementById('cart-total');
-                    if (cartTotalSpan) cartTotalSpan.textContent = `$${totalActual.toLocaleString('es-AR')}`;
+                    if (cartTotalSpan && !resultado.monto_final) {
+                        const cart = getCart();
+                        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                        cartTotalSpan.textContent = `$${total.toLocaleString('es-AR')}`;
+                    }
                     window.cuponAplicado = null;
                 }
             }
         });
     }
-
 });
 
+// Cargar productos destacados en el index
 loadFeaturedProducts();

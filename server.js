@@ -1,10 +1,9 @@
 require('dotenv').config();
 
 const cors = require('cors');
-
 const express = require('express');
 const path = require('path');
-
+const db = new sqlite3.Database('./ecommerce.sqlite');
 const sequelize = require('./src/config/database');
 
 const productosRouter = require('./src/routes/productosRoutes');
@@ -25,7 +24,34 @@ app.use(cors());
 app.use(express.json());
 
 // Servir TODOS los archivos estáticos
-app.use(express.static(__dirname));
+app.use(express.static('.'));
+
+// Endpoint para obtener todos los productos
+app.get('/api/productos', (req, res) => {
+    db.all("SELECT * FROM productos", [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
+});
+
+// Endpoint para obtener un producto por ID
+app.get('/api/productos/:id', (req, res) => {
+    const id = req.params.id;
+    db.get("SELECT * FROM productos WHERE id = ?", [id], (err, row) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        if (!row) {
+            res.status(404).json({ error: 'Producto no encontrado' });
+            return;
+        }
+        res.json(row);
+    });
+});
 
 // Rutas principales de la API
 app.use('/api/productos', productosRouter);

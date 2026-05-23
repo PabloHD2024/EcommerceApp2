@@ -16,7 +16,7 @@ function renderCart() {
             const div = document.createElement('div');
             div.className = 'cart-item';
             div.innerHTML = `
-                <img src="img${item.image}" alt="${item.name}" />
+                <img src="..${item.image}" alt="${item.name}" />
                 <div class="item-info">
                     <h3>${item.name}</h3>
                     <p class="item-unit-price">$${item.price.toFixed(2)} c/u</p>
