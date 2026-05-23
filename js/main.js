@@ -42,28 +42,40 @@ function showNotification(message) {
 
 // Función para añadir producto al carrito
 function addToCart(producto) {
+    const stock = Number(producto.stock) || 0;
+
+    if (stock <= 0) {
+        showNotification(`✕ ${producto.name || producto.nombre} no tiene stock disponible`);
+        return;
+    }
+
     let cart = getCart();
-    
+
     console.log("Añadiendo al carrito:", producto);
-    
+
     const existingProduct = cart.find(item => item.id === producto.id);
-    
+
     if (existingProduct) {
+        if (existingProduct.quantity >= stock) {
+            showNotification(`✕ No hay más stock disponible de ${producto.name || producto.nombre}`);
+            return;
+        }
+
         existingProduct.quantity += 1;
     } else {
         cart.push({
             id: producto.id,
-            name: producto.name,
-            price: producto.price,
-            image: producto.image || `/img/${producto.name.replace(/\s/g, '')}.png`,
+            name: producto.name || producto.nombre,
+            price: producto.price || producto.precio,
+            image: producto.image || `/img/${(producto.name || producto.nombre).replace(/\s/g, '')}.png`,
+            stock: stock,
             quantity: 1
         });
     }
-    
+
     saveCart(cart);
-    showNotification(`✓ ${producto.name} añadido al carrito`);
-    
-    // Si estamos en la página del carrito, actualizar la vista
+    showNotification(`✓ ${producto.name || producto.nombre} añadido al carrito`);
+
     if (typeof renderCart === 'function' && document.getElementById('cart-items')) {
         renderCart();
     }
@@ -72,22 +84,28 @@ function addToCart(producto) {
 // Función para manejar el click de añadir al carrito
 function handleAddToCart(event) {
     let button = event.target;
-    
+
     if (!button.classList.contains('btn-add')) {
         button = button.closest('.btn-add');
     }
-    
+
     if (!button) return;
-    
+
+    if (button.disabled || button.classList.contains('disabled')) {
+        showNotification('✕ Producto sin stock disponible');
+        return;
+    }
+
     const id = parseInt(button.getAttribute('data-id'));
     const name = button.getAttribute('data-name');
     const price = parseFloat(button.getAttribute('data-price'));
     const image = button.getAttribute('data-image');
-    
-    console.log("Botón clickeado - ID:", id, "Nombre:", name, "Precio:", price);
-    
-    if (id && name && price) {
-        addToCart({ id, name, price, image });
+    const stock = parseInt(button.getAttribute('data-stock'));
+
+    console.log("Botón clickeado - ID:", id, "Nombre:", name, "Precio:", price, "Stock:", stock);
+
+    if (id && name && !isNaN(price)) {
+        addToCart({ id, name, price, image, stock });
     } else {
         console.error("Faltan datos en el botón:", button);
     }
@@ -140,6 +158,8 @@ function displayFilteredProducts(products) {
         const imagen = product.image || product.imagen || 'https://via.placeholder.com/300x200?text=Imagen+no+disponible';
         const rating = product.rating || 0;
         const reviews = product.reviews || 0;
+        const stock = Number(product.stock) || 0;
+        const sinStock = stock <= 0;
         
         const fullStars = Math.floor(rating);
         const hasHalfStar = rating % 1 !== 0;
@@ -156,7 +176,7 @@ function displayFilteredProducts(products) {
         }
         
         const productCard = document.createElement('div');
-        productCard.className = 'product-card';
+        productCard.className = `product-card ${sinStock ? 'product-card-out-stock' : ''}`;
         productCard.innerHTML = `
             <div class="product-image">
                 <img src="${imagen}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/300x200?text=Imagen+no+disponible'">
@@ -166,9 +186,27 @@ function displayFilteredProducts(products) {
                 ${starsHTML}
                 <span>(${reviews})</span>
             </div>
-            <p class="price">$${precio.toLocaleString('es-AR')}</p>
-            <button class="btn-add" data-id="${product.id}" data-name="${nombre}" data-price="${precio}" data-image="${imagen}">
-                <i class="fa-solid fa-cart-plus"></i> Añadir al carrito
+            <<p class="price">$${precio.toLocaleString('es-AR')}</p>
+
+            <div class="stock-info">
+                ${
+                    sinStock
+                        ? '<span class="stock-badge sin-stock">Sin stock disponible</span>'
+                        : `<span class="stock-badge con-stock">Disponibles: ${stock}</span>`
+                }
+            </div>
+
+            <button 
+                class="btn-add ${sinStock ? 'disabled' : ''}" 
+                data-id="${product.id}" 
+                data-name="${nombre}" 
+                data-price="${precio}" 
+                data-image="${imagen}"
+                data-stock="${stock}"
+                ${sinStock ? 'disabled' : ''}
+            >
+                <i class="fa-solid fa-cart-plus"></i> 
+                ${sinStock ? 'Agotado' : 'Añadir al carrito'}
             </button>
         `;
         
