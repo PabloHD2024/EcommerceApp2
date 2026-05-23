@@ -104,7 +104,182 @@ function bindAddToCartButtons() {
     });
 }
 
+// ========== FILTRADO DE PRODUCTOS ==========
+let allProducts = []; // Guardar todos los productos
+let currentCategory = 'all'; // Categoría actual seleccionada
+
+// Función para filtrar productos por categoría
+function filterProductsByCategory(products, category) {
+    if (category === 'all') {
+        return products;
+    }
+    return products.filter(product => {
+        const productCategory = product.categoria || product.category;
+        return productCategory === category;
+    });
+}
+
+// Función para mostrar productos filtrados
+function displayFilteredProducts(products) {
+    const productsList = document.getElementById('products-list');
+    if (!productsList) return;
+    
+    const filteredProducts = filterProductsByCategory(products, currentCategory);
+    
+    if (filteredProducts.length === 0) {
+        productsList.innerHTML = '<p class="empty-message" style="text-align: center; padding: 40px;">No hay productos en esta categoría</p>';
+        return;
+    }
+    
+    productsList.innerHTML = '';
+    
+    filteredProducts.forEach(product => {
+        // Manejar diferentes nombres de propiedades
+        const nombre = product.name || product.nombre || 'Producto sin nombre';
+        const precio = product.price || product.precio || 0;
+        const imagen = product.image || product.imagen || 'https://via.placeholder.com/300x200?text=Imagen+no+disponible';
+        const rating = product.rating || 0;
+        const reviews = product.reviews || 0;
+        
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 !== 0;
+        let starsHTML = '';
+        
+        for (let i = 0; i < fullStars; i++) {
+            starsHTML += '<i class="fa-solid fa-star"></i>';
+        }
+        if (hasHalfStar) {
+            starsHTML += '<i class="fa-regular fa-star-half-stroke"></i>';
+        }
+        for (let i = 0; i < 5 - Math.ceil(rating); i++) {
+            starsHTML += '<i class="fa-regular fa-star"></i>';
+        }
+        
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card';
+        productCard.innerHTML = `
+            <div class="product-image">
+                <img src="${imagen}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/300x200?text=Imagen+no+disponible'">
+            </div>
+            <h3>${nombre}</h3>
+            <div class="rating">
+                ${starsHTML}
+                <span>(${reviews})</span>
+            </div>
+            <p class="price">$${precio.toLocaleString('es-AR')}</p>
+            <button class="btn-add" data-id="${product.id}" data-name="${nombre}" data-price="${precio}" data-image="${imagen}">
+                <i class="fa-solid fa-cart-plus"></i> Añadir al carrito
+            </button>
+        `;
+        
+        productsList.appendChild(productCard);
+    });
+    
+    // Reasignar eventos a los botones después de filtrar
+    bindAddToCartButtons();
+}
+
+// Función para inicializar los filtros
+function initFilters() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    
+    if (filterButtons.length === 0) return;
+    
+    filterButtons.forEach(btn => {
+        btn.removeEventListener('click', handleFilterClick);
+        btn.addEventListener('click', handleFilterClick);
+    });
+}
+
+// Manejador del click en filtros
+function handleFilterClick(event) {
+    const button = event.currentTarget;
+    const category = button.getAttribute('data-category');
+    
+    // Actualizar clase activa
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    button.classList.add('active');
+    
+    // Actualizar categoría actual y mostrar productos filtrados
+    currentCategory = category;
+    displayFilteredProducts(allProducts);
+}
+
 // ========== CARGAR PRODUCTOS EN LA PÁGINA productos.html ==========
+// async function loadProductsPage() {
+//     const productsList = document.getElementById('products-list');
+    
+//     if (!productsList) {
+//         console.log("No estamos en la página de productos");
+//         return;
+//     }
+
+//     console.log("Cargando productos desde la API...");
+
+//     try {
+//         const response = await fetch('/api/productos');
+        
+//         if (!response.ok) {
+//             throw new Error(`Error HTTP: ${response.status}`);
+//         }
+
+//         const products = await response.json();
+//         console.log(`✅ ${products.length} productos recibidos`);
+
+//         if (products.length === 0) {
+//             productsList.innerHTML = '<p class="empty-message">No hay productos disponibles</p>';
+//             return;
+//         }
+
+//         productsList.innerHTML = '';
+
+//         products.forEach(product => {
+//             const fullStars = Math.floor(product.rating);
+//             const hasHalfStar = product.rating % 1 !== 0;
+//             let starsHTML = '';
+            
+//             for (let i = 0; i < fullStars; i++) {
+//                 starsHTML += '<i class="fa-solid fa-star"></i>';
+//             }
+//             if (hasHalfStar) {
+//                 starsHTML += '<i class="fa-regular fa-star-half-stroke"></i>';
+//             }
+//             for (let i = 0; i < 5 - Math.ceil(product.rating); i++) {
+//                 starsHTML += '<i class="fa-regular fa-star"></i>';
+//             }
+            
+//             const productCard = document.createElement('div');
+//             productCard.className = 'product-card';
+//             productCard.innerHTML = `
+//                 <div class="product-image">
+//                     <img src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x200?text=Imagen+no+disponible'">
+//                 </div>
+//                 <h3>${product.name}</h3>
+//                 <div class="rating">
+//                     ${starsHTML}
+//                     <span>(${product.reviews})</span>
+//                 </div>
+//                 <p class="price">$${product.price.toLocaleString('es-AR')}</p>
+//                 <button class="btn-add" data-id="${product.id}" data-name="${product.name}" data-price="${product.price}" data-image="${product.image}">
+//                     <i class="fa-solid fa-cart-plus"></i> Añadir al carrito
+//                 </button>
+//             `;
+            
+//             productsList.appendChild(productCard);
+//         });
+        
+//         bindAddToCartButtons();
+        
+//         console.log("✅ Productos mostrados correctamente");
+        
+//     } catch (error) {
+//         console.error("❌ Error cargando productos:", error);
+//         productsList.innerHTML = `<p class="error-message" style="color:red; text-align:center;">Error: ${error.message}</p>`;
+//     }
+// }
+
 async function loadProductsPage() {
     const productsList = document.getElementById('products-list');
     
@@ -124,52 +299,27 @@ async function loadProductsPage() {
 
         const products = await response.json();
         console.log(`✅ ${products.length} productos recibidos`);
+        
+        // Ver el primer producto para debugging
+        if (products.length > 0) {
+            console.log("Primer producto:", products[0]);
+        }
+        
+        // Guardar todos los productos
+        allProducts = products;
 
         if (products.length === 0) {
             productsList.innerHTML = '<p class="empty-message">No hay productos disponibles</p>';
             return;
         }
 
-        productsList.innerHTML = '';
-
-        products.forEach(product => {
-            const fullStars = Math.floor(product.rating);
-            const hasHalfStar = product.rating % 1 !== 0;
-            let starsHTML = '';
-            
-            for (let i = 0; i < fullStars; i++) {
-                starsHTML += '<i class="fa-solid fa-star"></i>';
-            }
-            if (hasHalfStar) {
-                starsHTML += '<i class="fa-regular fa-star-half-stroke"></i>';
-            }
-            for (let i = 0; i < 5 - Math.ceil(product.rating); i++) {
-                starsHTML += '<i class="fa-regular fa-star"></i>';
-            }
-            
-            const productCard = document.createElement('div');
-            productCard.className = 'product-card';
-            productCard.innerHTML = `
-                <div class="product-image">
-                    <img src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x200?text=Imagen+no+disponible'">
-                </div>
-                <h3>${product.name}</h3>
-                <div class="rating">
-                    ${starsHTML}
-                    <span>(${product.reviews})</span>
-                </div>
-                <p class="price">$${product.price.toLocaleString('es-AR')}</p>
-                <button class="btn-add" data-id="${product.id}" data-name="${product.name}" data-price="${product.price}" data-image="${product.image}">
-                    <i class="fa-solid fa-cart-plus"></i> Añadir al carrito
-                </button>
-            `;
-            
-            productsList.appendChild(productCard);
-        });
+        // Inicializar filtros
+        initFilters();
         
-        bindAddToCartButtons();
+        // Mostrar productos (todos inicialmente)
+        displayFilteredProducts(products);
         
-        console.log("✅ Productos mostrados correctamente");
+        console.log("✅ Productos mostrados correctamente con filtros");
         
     } catch (error) {
         console.error("❌ Error cargando productos:", error);

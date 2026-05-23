@@ -1,32 +1,34 @@
+// ========== IMPORTACIONES ==========
+const express = require('express');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+const cors = require('cors');
 require('dotenv').config();
 
-const cors = require('cors');
-const express = require('express');
-const path = require('path');
-const db = new sqlite3.Database('./ecommerce.sqlite');
-const sequelize = require('./src/config/database');
-
-const productosRouter = require('./src/routes/productosRoutes');
-const categoriasRouter = require('./src/routes/categoriasRoutes');
-const pedidoRouter = require('./src/routes/pedidoRoutes');
-const detallePedidoRouter = require('./src/routes/detallePedidoRoutes');
-const ticketsRouter = require('./src/routes/ticketsRoutes');
-const cuponRouter = require('./src/routes/cuponRoutes');
-const clientesRouter = require('./src/routes/clientesRoutes');
-
+// ========== INICIALIZACIÓN ==========
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-//Permite peticiones desde el front:
+// ========== BASE DE DATOS ==========
+const db = new sqlite3.Database('./ecommerce.sqlite');
+
+// Verificar conexión a la BD
+db.get("SELECT 1", (err) => {
+    if (err) {
+        console.error("❌ Error al conectar con la base de datos:", err.message);
+    } else {
+        console.log("✅ Conectado a la base de datos SQLite");
+    }
+});
+
+// ========== MIDDLEWARE ==========
 app.use(cors());
-
-// Permite que el servidor entienda datos en formato JSON
 app.use(express.json());
-
-// Servir TODOS los archivos estáticos
 app.use(express.static('.'));
 
-// Endpoint para obtener todos los productos
+// ========== ENDPOINTS ==========
+
+// Obtener todos los productos
 app.get('/api/productos', (req, res) => {
     db.all("SELECT * FROM productos", [], (err, rows) => {
         if (err) {
@@ -37,7 +39,7 @@ app.get('/api/productos', (req, res) => {
     });
 });
 
-// Endpoint para obtener un producto por ID
+// Obtener un producto por ID
 app.get('/api/productos/:id', (req, res) => {
     const id = req.params.id;
     db.get("SELECT * FROM productos WHERE id = ?", [id], (err, row) => {
@@ -53,38 +55,96 @@ app.get('/api/productos/:id', (req, res) => {
     });
 });
 
-// Rutas principales de la API
-app.use('/api/productos', productosRouter);
-app.use('/api/categorias', categoriasRouter);
-app.use('/api/pedido', pedidoRouter);
-app.use('/api/detalle-pedido', detallePedidoRouter);
-app.use('/api/tickets', ticketsRouter);
-app.use('/api/cupones', cuponRouter);
-app.use('/api/clientes', clientesRouter);
-
-app.use('/img', express.static(path.join(__dirname, 'img')));
-
-app.post('/api/checkout', (req, res) => {
-  const carritoRecibido = req.body;
-
-  console.log('🛒 Nueva compra recibida:');
-  console.log(carritoRecibido);
-
-  res.json({
-    mensaje: 'Ticket generado con éxito, gracias por su compra',
-    carrito: carritoRecibido
-  });
+// Obtener categorías únicas
+app.get('/api/categorias', (req, res) => {
+    db.all("SELECT DISTINCT categoria FROM productos ORDER BY categoria", [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        const categorias = rows.map(row => row.categoria);
+        res.json(categorias);
+    });
 });
 
-// Sincronizar base de datos y luego iniciar servidor
-sequelize.sync()
-  .then(() => {
-    console.log('✅ Base de datos conectada y sincronizada');
-
-    app.listen(PORT, () => {
-      console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+// Endpoint para checkout
+app.post('/api/checkout', (req, res) => {
+    const { carrito, total, cupon_aplicado } = req.body;
+    
+    console.log("Nueva compra:", { carrito, total, cupon_aplicado });
+    
+    // Aquí puedes agregar lógica para guardar la compra en la BD
+    
+    res.json({ 
+        mensaje: "Compra realizada con éxito",
+        total: total,
+        cupon: cupon_aplicado
     });
-  })
-  .catch((error) => {
-    console.error('❌ Error de conexión con la base de datos:', error);
-  });
+});
+
+// Endpoints para cupones
+app.get('/api/cupones/validar/:codigo', (req, res) => {
+    const codigo = req.params.codigo;
+    
+    db.get("SELECT * FROM cupones WHERE codigo = ? AND activo = 1", [codigo], (err, row) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        
+        if (row) {
+            res.json({ 
+                valido: true, 
+                descuento: row.descuento,
+                tipo: row.tipo,
+                mensaje: "Cupón válido"
+            });
+        } else {
+            res.json({ 
+                valido: false, 
+                mensaje: "Cupón no válido"
+            });
+        }
+    });
+});
+
+app.get('/api/cupones/aplicar/:codigo', (req, res) => {
+    const codigo = req.params.codigo;
+    const monto = parseFloat(req.query.monto) || 0;
+    
+    db.get("SELECT * FROM cupones WHERE codigo = ? AND activo = 1", [codigo], (err, row) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        
+        if (!row) {
+            res.json({ mensaje: "Cupón no válido" });
+            return;
+        }
+        
+        let descuento = 0;
+        if (row.tipo === 'porcentaje') {
+            descuento = monto * (row.descuento / 100);
+        } else {
+            descuento = row.descuento;
+        }
+        
+        const monto_final = Math.max(0, monto - descuento);
+        
+        res.json({
+            valido: true,
+            descuento: row.descuento,
+            tipo: row.tipo,
+            ahorro: descuento,
+            monto_final: monto_final,
+            mensaje: `Cupón aplicado: ${row.descuento}% de descuento`
+        });
+    });
+});
+
+// ========== INICIAR SERVIDOR ==========
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`📁 Sirviendo archivos desde: ${__dirname}`);
+});
