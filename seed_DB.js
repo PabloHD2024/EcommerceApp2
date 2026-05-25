@@ -40,9 +40,9 @@ async function seedDatabase() {
         await sequelize.authenticate();
         console.log('✅ Conexión exitosa');
 
-        console.log('🔄 Sincronizando tablas...');
-        await sequelize.sync({ force: true });
-        console.log('✅ Tablas creadas/actualizadas');
+        console.log('🔄 Sincronizando tabla de productos...');
+        await Producto.sync({ force: true });
+        console.log('✅ Tabla de productos creada/actualizada');
 
         console.log('📝 Insertando productos...');
         let insertados = 0;
