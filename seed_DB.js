@@ -4,7 +4,7 @@ const sequelize = require('./src/config/database');
 const Producto = require('./src/models/Producto');
 
 const productosIniciales = [
-    { nombre: "Pava Eléctrica Corte Mate 1.7L", precio: 34990, stock: 45, categoria: "Electrodomésticos", image: "/img/PavaEléctrica.png", rating: 4.5, reviews: 310 },
+    { nombre: "Pava Eléctrica Corte Mate 1.7L", precio: 34990, stock: 0, categoria: "Electrodomésticos", image: "/img/PavaEléctrica.png", rating: 4.5, reviews: 310 },
     { nombre: "Cafetera Express 15 Bares", precio: 159990, stock: 15, categoria: "Electrodomésticos", image: "/img/CafeteraExpress.png", rating: 4.8, reviews: 95 },
     { nombre: "Licuadora de Mano 800W", precio: 42990, stock: 25, categoria: "Electrodomésticos", image: "/img/LicuadoraMano.png", rating: 4.2, reviews: 115 },
     { nombre: "Tostadora Eléctrica para 2 Rebanadas", precio: 29990, stock: 35, categoria: "Electrodomésticos", image: "/img/TostadoraElectrica.png", rating: 4.0, reviews: 78 },

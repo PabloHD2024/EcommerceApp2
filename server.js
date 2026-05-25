@@ -3,6 +3,7 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const cors = require('cors');
+const productosRoutes = require('./src/routes/productosRoutes');
 require('dotenv').config();
 
 // ========== INICIALIZACIÓN ==========
@@ -25,6 +26,7 @@ db.get("SELECT 1", (err) => {
 app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
+app.use('/api/productos', productosRoutes);
 
 // ========== ENDPOINTS ==========
 
