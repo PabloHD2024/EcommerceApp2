@@ -5,6 +5,7 @@ const path = require("path");
 const cors = require("cors");
 const productosRoutes = require("./src/routes/productosRoutes");
 const categoriasRoutes = require("./src/routes/categoriasRoutes");
+const cuponRoutes = require("./src/routes/cuponRoutes");
 
 require("dotenv").config();
 
@@ -30,6 +31,7 @@ app.use(express.json());
 app.use(express.static("."));
 app.use("/api/productos", productosRoutes);
 app.use("/api/categorias", categoriasRoutes);
+app.use("/api/cupones", cuponRoutes);
 
 // ========== ENDPOINTS ==========
 
@@ -60,22 +62,6 @@ app.get("/api/productos/:id", (req, res) => {
   });
 });
 
-// Obtener categorías únicas
-app.get("/api/categorias", (req, res) => {
-  db.all(
-    "SELECT DISTINCT categoria FROM productos ORDER BY categoria",
-    [],
-    (err, rows) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-      const categorias = rows.map((row) => row.categoria);
-      res.json(categorias);
-    },
-  );
-});
-
 // Endpoint para checkout
 app.post("/api/checkout", (req, res) => {
   const { carrito, total, cupon_aplicado } = req.body;
@@ -92,73 +78,6 @@ app.post("/api/checkout", (req, res) => {
 });
 
 // Endpoints para cupones
-app.get("/api/cupones/validar/:codigo", (req, res) => {
-  const codigo = req.params.codigo;
-
-  db.get(
-    "SELECT * FROM cupones WHERE codigo = ? AND activo = 1",
-    [codigo],
-    (err, row) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-
-      if (row) {
-        res.json({
-          valido: true,
-          descuento: row.descuento,
-          tipo: row.tipo,
-          mensaje: "Cupón válido",
-        });
-      } else {
-        res.json({
-          valido: false,
-          mensaje: "Cupón no válido",
-        });
-      }
-    },
-  );
-});
-
-app.get("/api/cupones/aplicar/:codigo", (req, res) => {
-  const codigo = req.params.codigo;
-  const monto = parseFloat(req.query.monto) || 0;
-
-  db.get(
-    "SELECT * FROM cupones WHERE codigo = ? AND activo = 1",
-    [codigo],
-    (err, row) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-
-      if (!row) {
-        res.json({ mensaje: "Cupón no válido" });
-        return;
-      }
-
-      let descuento = 0;
-      if (row.tipo === "porcentaje") {
-        descuento = monto * (row.descuento / 100);
-      } else {
-        descuento = row.descuento;
-      }
-
-      const monto_final = Math.max(0, monto - descuento);
-
-      res.json({
-        valido: true,
-        descuento: row.descuento,
-        tipo: row.tipo,
-        ahorro: descuento,
-        monto_final: monto_final,
-        mensaje: `Cupón aplicado: ${row.descuento}% de descuento`,
-      });
-    },
-  );
-});
 
 // ========== INICIAR SERVIDOR ==========
 app.listen(PORT, () => {
