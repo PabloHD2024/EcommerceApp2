@@ -10,7 +10,7 @@ El objetivo del proyecto es construir una aplicación de e-commerce utilizando *
 
 EcommerceApp2 es una aplicación web de tienda online que permite trabajar con distintas entidades propias de un sistema de ventas, como productos, categorías, clientes, pedidos, detalles de pedido, tickets y cupones.
 
-En esta etapa del proyecto se implementó una **API REST** para manejar datos desde el backend. Algunas entidades ya cuentan con persistencia mediante **Sequelize + SQLite**, mientras que otras continúan en proceso de migración o mejora.
+En esta etapa del proyecto se implementó una **API REST** para manejar datos desde el backend. Algunas entidades ya cuentan con persistencia mediante **Sequelize + SQLite**, mientras que otras continúan en proceso de migración, conexión o mejora.
 
 ---
 
@@ -37,17 +37,17 @@ El proyecto utiliza una organización basada en el patrón **MVC**.
 
 Los modelos representan las entidades principales del sistema y se encuentran en:
 
-src/models/
+`src/models/`
 
 Modelos actuales:
 
-- Producto.js
-- Cliente.js
-- Cupon.js
-- Pedido.js
-- DetallePedido.js
-- Ticket.js
-- cart.js
+- `Producto.js`
+- `Cliente.js`
+- `Cupon.js`
+- `Pedido.js`
+- `DetallePedido.js`
+- `Ticket.js`
+- `cart.js`
 
 ### Controllers
 
@@ -55,17 +55,17 @@ Los controladores contienen la lógica de cada recurso. Reciben la petición, pr
 
 Se encuentran en:
 
-src/controllers/
+`src/controllers/`
 
 Controladores actuales:
 
-- productosController.js
-- categoriasController.js
-- clientesController.js
-- cuponController.js
-- pedidoController.js
-- detallePedidoController.js
-- ticketsController.js
+- `productosController.js`
+- `categoriasController.js`
+- `clientesController.js`
+- `cuponController.js`
+- `pedidoController.js`
+- `detallePedidoController.js`
+- `ticketsController.js`
 
 ### Routes
 
@@ -73,31 +73,33 @@ Las rutas definen los endpoints de la API y conectan cada URL con su controlador
 
 Se encuentran en:
 
-src/routes/
+`src/routes/`
 
 Rutas actuales:
 
-- productosRoutes.js
-- categoriasRoutes.js
-- clientesRoutes.js
-- cuponRoutes.js
-- pedidoRoutes.js
-- detallePedidoRoutes.js
-- ticketsRoutes.js
+- `productosRoutes.js`
+- `categoriasRoutes.js`
+- `clientesRoutes.js`
+- `cuponRoutes.js`
+- `pedidoRoutes.js`
+- `detallePedidoRoutes.js`
+- `ticketsRoutes.js`
 
 ### Config
 
 La configuración de la base de datos se encuentra en:
 
-src/config/database.js
+`src/config/database.js`
 
 La conexión utiliza variables de entorno definidas en el archivo `.env`.
 
-Ejemplo:
+Ejemplo de `.env`:
 
+```env
 PORT=3000
 DB_DIALECT=sqlite
 DB_STORAGE=./ecommerce.sqlite
+```
 
 ---
 
@@ -154,31 +156,53 @@ EcommerceApp2/
 
 ### 1. Clonar el repositorio
 
+```bash
 git clone https://github.com/PabloHD2024/EcommerceApp2.git
+```
 
 ### 2. Ingresar a la carpeta del proyecto
 
+```bash
 cd EcommerceApp2
+```
 
 ### 3. Instalar dependencias
 
+```bash
 npm install
+```
 
 ### 4. Configurar variables de entorno
 
 Crear un archivo `.env` en la raíz del proyecto con el siguiente contenido:
 
+```env
 PORT=3000
 DB_DIALECT=sqlite
 DB_STORAGE=./ecommerce.sqlite
+```
 
-### 5. Ejecutar el servidor
+### 5. Crear o actualizar la base de datos local
 
+Ejecutar el seed para crear la base SQLite local y cargar los productos iniciales:
+
+```bash
+node seed_DB.js
+```
+
+Este paso es necesario cuando se clona el proyecto por primera vez, cuando se borra `ecommerce.sqlite`, o cuando se actualizan datos/modelos relacionados con la base.
+
+### 6. Ejecutar el servidor
+
+```bash
 npm start
+```
 
 El servidor se ejecuta en:
 
-http://localhost:3000
+`http://localhost:3000`
+
+Importante: la aplicación debe abrirse desde `http://localhost:3000`, no haciendo doble click sobre `index.html`, porque el frontend necesita comunicarse con la API del backend.
 
 ---
 
@@ -186,154 +210,86 @@ http://localhost:3000
 
 ### Productos
 
+```http
 GET /api/productos
 GET /api/productos/:id
 POST /api/productos
 PUT /api/productos/:id
 DELETE /api/productos/:id
+```
 
 Ejemplo de body para crear producto:
 
+```json
 {
   "nombre": "Teclado mecánico",
   "precio": 75000,
   "stock": 20,
   "categoria": "Tecnología"
 }
+```
 
 ---
 
 ### Categorías
 
+```http
 GET /api/categorias
-GET /api/categorias/:id
-POST /api/categorias
-PUT /api/categorias/:id
-DELETE /api/categorias/:id
+```
 
-Ejemplo de body para crear categoría:
+Este endpoint devuelve las categorías disponibles a partir de los productos cargados en la base de datos.
 
-{
-  "nombre": "Gaming"
-}
+Ejemplo de respuesta:
 
----
-
-### Clientes
-
-GET /api/clientes
-GET /api/clientes/:id
-POST /api/clientes
-PUT /api/clientes/:id
-DELETE /api/clientes/:id
-
-Ejemplo de body para crear cliente:
-
-{
-  "nombre": "Juan",
-  "apellido": "Perez",
-  "email": "juan.perez@mail.com",
-  "telefono": "1122334455",
-  "direccion": "Av. Corrientes 1234"
-}
-
----
-
-### Cupones
-
-GET /api/cupones
-GET /api/cupones/:id
-POST /api/cupones
-PUT /api/cupones/:id
-DELETE /api/cupones/:id
-GET /api/cupones/validar/:codigo
-GET /api/cupones/aplicar/:codigo?monto=10000
-POST /api/cupones/:id/usar
-
-Ejemplo de body para crear cupón:
-
-{
-  "descuento": 15,
-  "fecha_vencimiento": "2026-12-31",
-  "limite_stock": 5
-}
-
----
-
-### Pedidos
-
-GET /api/pedido
-GET /api/pedido/:id
-POST /api/pedido
-PUT /api/pedido/:id
-DELETE /api/pedido/:id
-
----
-
-### Detalle de pedido
-
-GET /api/detalle-pedido
-GET /api/detalle-pedido/:id
-POST /api/detalle-pedido
-PUT /api/detalle-pedido/:id
-DELETE /api/detalle-pedido/:id
-
----
-
-### Tickets
-
-GET /api/tickets
-GET /api/tickets/:id
-POST /api/tickets
-PUT /api/tickets/:id
-DELETE /api/tickets/:id
+```json
+["Computación", "Electrodomésticos", "Tecnología"]
+```
 
 ---
 
 ### Checkout
 
+```http
 POST /api/checkout
+```
+
+Endpoint básico para simular una compra desde el carrito.
+
+---
+
+### Cupones
+
+```http
+GET /api/cupones/validar/:codigo
+GET /api/cupones/aplicar/:codigo?monto=10000
+```
+
+Estos endpoints permiten validar un cupón y calcular el descuento sobre un monto determinado.
+
+Nota: el módulo de cupones cuenta con rutas MVC creadas, pero su integración completa al servidor continúa en proceso de ajuste.
 
 ---
 
 ## Pruebas con PowerShell
 
-### Probar clientes
+### Probar productos
 
-Invoke-RestMethod http://localhost:3000/api/clientes
+```powershell
+Invoke-RestMethod http://localhost:3000/api/productos
+```
 
-Invoke-RestMethod -Uri "http://localhost:3000/api/clientes" `
-  -Method POST `
-  -ContentType "application/json" `
-  -Body '{
-    "nombre": "Juan",
-    "apellido": "Perez",
-    "email": "juan.perez@mail.com",
-    "telefono": "1122334455",
-    "direccion": "Av. Corrientes 1234"
-  }'
+### Probar categorías
 
----
+```powershell
+Invoke-RestMethod http://localhost:3000/api/categorias
+```
 
 ### Probar cupones
 
-Invoke-RestMethod http://localhost:3000/api/cupones
-
-Invoke-RestMethod -Uri "http://localhost:3000/api/cupones" `
-  -Method POST `
-  -ContentType "application/json" `
-  -Body '{
-    "descuento": 15,
-    "fecha_vencimiento": "2026-12-31",
-    "limite_stock": 5
-  }'
-
+```powershell
 Invoke-RestMethod http://localhost:3000/api/cupones/validar/1
-
 Invoke-RestMethod "http://localhost:3000/api/cupones/aplicar/1?monto=10000"
-
-Invoke-RestMethod -Uri "http://localhost:3000/api/cupones/1/usar" `
-  -Method POST
+```
 
 ---
 
@@ -343,19 +299,15 @@ Actualmente el proyecto cuenta con:
 
 - Servidor Express funcionando.
 - Frontend servido desde Express.
-- API REST organizada por rutas y controladores.
-- Estructura MVC aplicada.
 - Conexión a base de datos SQLite mediante Sequelize.
-- Persistencia implementada en varias entidades del dominio.
-- CRUD de productos.
-- CRUD de categorías.
-- CRUD de clientes.
-- CRUD de cupones con validación, aplicación de descuento y registro de uso.
-- CRUD de pedidos.
-- CRUD de detalle de pedido.
-- CRUD de tickets.
 - Archivo `.env` para configuración.
 - Archivo `.gitignore` configurado.
+- CRUD de productos conectado y funcionando.
+- Listado de categorías conectado mediante estructura MVC.
+- Endpoint básico de checkout.
+- Endpoints de validación y aplicación de cupones disponibles.
+- Estructura MVC creada para varias entidades del dominio.
+- Algunas entidades continúan en proceso de integración completa al servidor.
 
 ---
 
@@ -363,6 +315,7 @@ Actualmente el proyecto cuenta con:
 
 Posibles mejoras futuras:
 
+- Completar la integración de todas las rutas MVC en `server.js`.
 - Unificar completamente todas las entidades bajo Sequelize.
 - Agregar relaciones entre modelos.
 - Relacionar pedidos con clientes.
@@ -378,11 +331,10 @@ Posibles mejoras futuras:
 
 ## Integrantes
 
-- Ignacio Vidal
-- Pablo Demartini
 - Lucía Corral
+- Pablo Demartini
 - Carla Guisande
 - Ignacio Hernandez
+- Ignacio Vidal
 
 ---
-
