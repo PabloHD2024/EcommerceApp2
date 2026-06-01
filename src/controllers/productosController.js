@@ -5,15 +5,15 @@ const productosController = {
     try {
       const { categoria } = req.query;
 
-      const whereCondition = {};
+      const where = {};
 
       if (categoria) {
-        whereCondition.categoria = categoria;
+        where.categoria = categoria;
       }
 
-      const productos = await Producto.findAll({
-        where: whereCondition,
-      });
+      const productos = await Producto.findAll({ where });
+
+      res.json(productos);
 
       const productosFormateados = productos.map((producto) => ({
         id: producto.id,
