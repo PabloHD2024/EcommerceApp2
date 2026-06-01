@@ -29,6 +29,18 @@ const Producto = sequelize.define('Producto', {
     reviews: {
         type: DataTypes.INTEGER,
         defaultValue: 0
+    },
+
+    // Vigencia del producto
+    validFrom: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW
+    },
+    validTo: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: new Date('2099-12-31')
     }
 });
 
