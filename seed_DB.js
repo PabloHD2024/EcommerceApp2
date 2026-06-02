@@ -32,7 +32,7 @@ const productosIniciales = [
     reviews: 115,
   },
   {
-    nombre: "Tostadora Eléctrica para 2 Rebanadas",
+    nombre: "Tostadora Eléctrica Oster",
     precio: 29990,
     stock: 35,
     categoria: "Electrodomésticos",
@@ -76,8 +76,6 @@ const productosIniciales = [
     rating: 4.1,
     reviews: 88,
   },
-
-  // --- TECNOLOGÍA ---
   {
     nombre: "Soporte Celular para Auto con Carga Inalámbrica",
     precio: 19990,
@@ -141,15 +139,11 @@ const productosIniciales = [
     rating: 4.5,
     reviews: 112,
   },
-
-  // --- COMPUTACIÓN  ---
-  // --- COMPUTACIÓN ---
   {
     nombre: "Mouse Óptico Inalámbrico Logitech M280",
     precio: 18990,
     stock: 80,
     categoria: "Periféricos",
-    categoria: "Computación",
     image: "/img/MouseLogitechM280.png",
     rating: 4.8,
     reviews: 520,
@@ -159,7 +153,6 @@ const productosIniciales = [
     precio: 39990,
     stock: 35,
     categoria: "Almacenamiento",
-    categoria: "Computación",
     image: "/img/SSDKingston480Gb.png",
     rating: 4.9,
     reviews: 610,
@@ -196,7 +189,6 @@ const productosIniciales = [
     precio: 31990,
     stock: 28,
     categoria: "Periféricos",
-    categoria: "Computación",
     image: "/img/WebcamFullHD.png",
     rating: 4.1,
     reviews: 73,
@@ -206,7 +198,6 @@ const productosIniciales = [
     precio: 14990,
     stock: 65,
     categoria: "Periféricos",
-    categoria: "Computación",
     image: "/img/HubUSB-C4Puertos.png",
     rating: 4.3,
     reviews: 142,
@@ -234,12 +225,10 @@ const productosIniciales = [
     precio: 12500,
     stock: 100,
     categoria: "Periféricos",
-    categoria: "Computación",
     image: "/img/PadMouseGamer.png",
     rating: 4.7,
     reviews: 315,
   },
-  // --- ELECTRÓNICA ---
   {
     nombre: "Auriculares Bluetooth Inalámbricos",
     precio: 34990,
