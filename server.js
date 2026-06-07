@@ -13,7 +13,9 @@ const Producto = require("./src/models/Producto");
 const productosRoutes = require("./src/routes/productosRoutes");
 const categoriasRoutes = require("./src/routes/categoriasRoutes");
 const cuponRoutes = require("./src/routes/cuponRoutes");
+const authRoutes = require("./src/routes/authRoutes");
 
+require("./src/models/User");
 // ========== INICIALIZACIÓN ==========
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,6 +44,9 @@ app.use(express.static("."));
 app.use("/api/productos", productosRoutes);
 app.use("/api/categorias", categoriasRoutes);
 app.use("/api/cupones", cuponRoutes);
+app.use("/api/auth", authRoutes);
+
+console.log("✅ Ruta /api/auth montada");
 
 // Endpoint simple de diagnóstico
 app.get("/api", (req, res) => {
@@ -52,6 +57,7 @@ app.get("/api", (req, res) => {
       "GET /api/productos?categoria=...",
       "GET /api/categorias",
       "GET /api/cupones",
+      "POST /api/auth/login",
       "POST /api/checkout",
     ],
   });
