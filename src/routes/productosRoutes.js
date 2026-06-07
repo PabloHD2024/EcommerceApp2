@@ -1,23 +1,18 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
-const productosController = require('../controllers/productosController');
+const productosController = require("../controllers/productosController");
+const { authenticateToken, isAdmin } = require("../middlewares/authMiddleware");
 
-console.log('Controlador cargado:', Object.keys(productosController));
+console.log("Controlador cargado:", Object.keys(productosController));
 
-// Obtener todos los productos
-router.get('/', productosController.getAll);
+// Rutas públicas
+router.get("/", productosController.getAll);
+router.get("/:id", productosController.getById);
 
-// Obtener un producto por ID
-router.get('/:id', productosController.getById);
-
-// Crear un producto
-router.post('/', productosController.create);
-
-// Actualizar un producto
-router.put('/:id', productosController.update);
-
-// Eliminar un producto
-router.delete('/:id', productosController.delete);
+// Rutas protegidas: solo admin autenticado
+router.post("/", authenticateToken, isAdmin, productosController.create);
+router.put("/:id", authenticateToken, isAdmin, productosController.update);
+router.delete("/:id", authenticateToken, isAdmin, productosController.delete);
 
 module.exports = router;
