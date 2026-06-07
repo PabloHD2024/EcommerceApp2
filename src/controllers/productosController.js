@@ -46,40 +46,42 @@ const productosController = {
   },
 
   getById: async (req, res) => {
-    try {
-      const producto = await Producto.findByPk(req.params.id);
+  try {
+    const today = new Date();
 
-      if (!producto) {
-        return res.status(404).json({ error: "Producto no encontrado" });
-      }
+    const producto = await Producto.findByPk(req.params.id);
 
-      res.json({
-        id: producto.id,
-        name: producto.nombre,
-        nombre: producto.nombre,
-        price: producto.precio,
-        precio: producto.precio,
-        stock: producto.stock,
-        categoria: producto.categoria,
-        image: producto.image,
-        rating: producto.rating,
-        reviews: producto.reviews,
-        validFrom: producto.validFrom,
-        validTo: producto.validTo,
-      });
-    } catch (error) {
-      console.error("ERROR REAL EN getById PRODUCTOS:", error);
-      res.status(500).json({
-        error: "Error en el servidor",
-        detalle: error.message,
+    if (!producto) {
+      return res.status(404).json({
+        error: "Producto no encontrado o no vigente",
       });
     }
-  },
+
+    res.json({
+      id: producto.id,
+      name: producto.nombre,
+      nombre: producto.nombre,
+      price: producto.precio,
+      precio: producto.precio,
+      stock: producto.stock,
+      categoria: producto.categoria,
+      image: producto.image,
+      rating: producto.rating,
+      reviews: producto.reviews,
+      validFrom: producto.validFrom,
+      validTo: producto.validTo,
+    });
+  } catch (error) {
+    console.error("ERROR REAL EN getById PRODUCTOS:", error);
+    res.status(500).json({
+      error: "Error en el servidor",
+      detalle: error.message,
+    });
+  }
+},
 
   create: async (req, res) => {
     try {
-      console.log("BODY RECIBIDO:", req.body);
-
       const nuevoProducto = await Producto.create(req.body);
 
       res.status(201).json({

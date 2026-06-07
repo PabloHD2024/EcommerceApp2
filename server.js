@@ -46,7 +46,6 @@ app.use("/api/categorias", categoriasRoutes);
 app.use("/api/cupones", cuponRoutes);
 app.use("/api/auth", authRoutes);
 
-console.log("✅ Ruta /api/auth montada");
 
 // Endpoint simple de diagnóstico
 app.get("/api", (req, res) => {
