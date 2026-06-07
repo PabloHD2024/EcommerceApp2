@@ -10,7 +10,7 @@ console.log("Controlador cargado:", Object.keys(productosController));
 router.get("/", productosController.getAll);
 router.get("/:id", productosController.getById);
 
-// Rutas protegidas: solo admin autenticado
+// Rutas protegidas: solo administradores autenticados
 router.post("/", authenticateToken, isAdmin, productosController.create);
 router.put("/:id", authenticateToken, isAdmin, productosController.update);
 router.delete("/:id", authenticateToken, isAdmin, productosController.delete);
