@@ -32,14 +32,19 @@ const cuponesIniciales = [
 
 async function seedDatabaseCupones() {
   try {
-    // 'force: true' borra la tabla 'Cupons' o 'Cupones' vieja si existe,
-    // y la crea de cero con el nuevo campo 'codigo' y el id autoincremental.
-    await sequelize.sync({ force: true });
-    console.log("Base de datos resincronizada (tablas recreadas limpias).");
+    await Cupon.sync({ alter: true });
+    console.log("Tabla de cupones sincronizada sin borrar datos existentes.");
 
-    // Como la tabla está vacía y nueva, podemos usar bulkCreate directo y seguro
-    await Cupon.bulkCreate(cuponesIniciales);
-    console.log("¡Cupón inicial cargado con éxito!");
+    for (const cupon of cuponesIniciales) {
+      const [, created] = await Cupon.findOrCreate({
+        where: { codigo: cupon.codigo },
+        defaults: cupon,
+      });
+
+      console.log(created ? `Cupón creado: ${cupon.codigo}` : `Cupón ya existía: ${cupon.codigo}`);
+    }
+
+    console.log("¡Cupones iniciales cargados con éxito!");
   } catch (error) {
     console.error("Error al cargar los datos:", error);
   } finally {

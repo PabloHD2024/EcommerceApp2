@@ -388,7 +388,7 @@
     <!-- Notificación flotante -->
     <div id="notification" class="notification"></div>
 
-    <script src="../js/main.js"></script>
+    <script src="../js/main.js?v=admin-pagination"></script>
     
     <script>
         // Verificación de seguridad al cargar la página
@@ -417,16 +417,55 @@
                 return fallback;
             }
         }
+
+        function getProductsFromResponse(payload) {
+            return Array.isArray(payload) ? payload : payload.data || [];
+        }
+
+        function getPaginationFromResponse(payload) {
+            return Array.isArray(payload) ? null : payload.metadata || null;
+        }
+
+        const ADMIN_PRODUCTS_LIMIT = 6;
+        let adminProductsPage = 1;
         
-        async function loadProducts() {
+        function renderAdminProductsPagination(metadata) {
+            if (!metadata || Number(metadata.totalPages) <= 1) {
+                return '';
+            }
+
+            return `
+                <div class="pagination-container admin-pagination">
+                    <button class="pagination-btn" onclick="loadProducts(${metadata.currentPage - 1})" ${metadata.hasPreviousPage ? '' : 'disabled'}>
+                        <i class="fa-solid fa-chevron-left"></i> Anterior
+                    </button>
+                    <span class="pagination-info">
+                        Página ${metadata.currentPage} de ${metadata.totalPages} · Mostrando ${metadata.fromItem}-${metadata.toItem} de ${metadata.totalItems}
+                    </span>
+                    <button class="pagination-btn" onclick="loadProducts(${metadata.currentPage + 1})" ${metadata.hasNextPage ? '' : 'disabled'}>
+                        Siguiente <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            `;
+        }
+        
+        async function loadProducts(page = adminProductsPage) {
             const container = document.getElementById('products-container');
+            adminProductsPage = Math.max(Number(page) || 1, 1);
             
             try {
-                const response = await fetch('/api/productos');
+                const response = await fetch(`/api/productos?page=${adminProductsPage}&limit=${ADMIN_PRODUCTS_LIMIT}`);
                 if (!response.ok) throw new Error('Error al cargar productos');
                 
-                const products = await response.json();
+                const payload = await response.json();
+                const products = getProductsFromResponse(payload);
+                const metadata = getPaginationFromResponse(payload);
                 
+                if ((!products || products.length === 0) && metadata?.totalItems > 0 && adminProductsPage > 1) {
+                    await loadProducts(adminProductsPage - 1);
+                    return;
+                }
+
                 if (!products || products.length === 0) {
                     container.innerHTML = `
                         <div class="empty-state">
@@ -488,6 +527,7 @@
                             </tbody>
                         </table>
                     </div>
+                    ${renderAdminProductsPagination(metadata)}
                 `;
                 
                 container.innerHTML = html;
@@ -699,7 +739,7 @@
                 
                 showNotification(productId ? '✓ Producto actualizado' : '✓ Producto creado');
                 closeAdminModal();
-                await loadProducts();
+                await loadProducts(productId ? adminProductsPage : 1);
                 
             } catch (error) {
                 console.error('Error:', error);
@@ -737,7 +777,7 @@
                 }
                 
                 showNotification('✓ Producto eliminado');
-                await loadProducts();
+                await loadProducts(adminProductsPage);
                 
             } catch (error) {
                 console.error('Error:', error);

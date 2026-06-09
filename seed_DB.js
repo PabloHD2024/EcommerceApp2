@@ -266,8 +266,8 @@ async function seedDatabase() {
     console.log("✅ Conexión exitosa");
 
     console.log("🔄 Sincronizando tabla de productos...");
-    await Producto.sync({ force: true });
-    console.log("✅ Tabla de productos creada/actualizada");
+    await Producto.sync({ alter: true });
+    console.log("✅ Tabla de productos creada/actualizada sin borrar datos existentes");
 
     console.log("📝 Insertando productos...");
     let insertados = 0;
@@ -275,9 +275,17 @@ async function seedDatabase() {
     for (let i = 0; i < productosIniciales.length; i++) {
       const producto = productosIniciales[i];
       try {
-        await Producto.create(producto);
-        insertados++;
-        console.log(`   ✓ ${i + 1}. ${producto.nombre}`);
+        const [, created] = await Producto.findOrCreate({
+          where: { nombre: producto.nombre },
+          defaults: producto,
+        });
+
+        if (created) {
+          insertados++;
+          console.log(`   ✓ ${i + 1}. ${producto.nombre}`);
+        } else {
+          console.log(`   - ${i + 1}. Ya existía: ${producto.nombre}`);
+        }
       } catch (err) {
         console.error(
           `   ✗ ${i + 1}. Error con ${producto.nombre}:`,
