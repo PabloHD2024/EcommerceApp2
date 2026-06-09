@@ -81,13 +81,13 @@ const authController = {
                 return res.status(400).json({ success: false, message: "El correo electrónico ya está registrado" });
             }
 
-            // Crear el usuario en la BD (Por defecto rol 'user')
+            // Crear el usuario en la BD (Por defecto rol 'client')
             // Nota: Tu modelo 'User' debería encriptar la contraseña mediante hooks de Sequelize antes de guardar
             await User.create({
                 name,
                 email,
                 password,
-                role: "user" 
+                role: "client"
             });
 
             res.status(201).json({

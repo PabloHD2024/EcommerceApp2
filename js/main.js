@@ -383,7 +383,7 @@ function initAuthForms() {
         
         const data = await response.json();
         
-        if (!response.ok) throw new Error(data.mensaje || "Error al iniciar sesión");
+        if (!response.ok) throw new Error(data.message || data.mensaje || "Error al iniciar sesión");
         
         localStorage.setItem("token", data.token);
         localStorage.setItem("userRole", data.user.role);
@@ -426,12 +426,12 @@ function initAuthForms() {
         const response = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email, password, role: "user" })
+          body: JSON.stringify({ name, email, password })
         });
         
         const data = await response.json();
         
-        if (!response.ok) throw new Error(data.mensaje || "Error al registrarse");
+        if (!response.ok) throw new Error(data.message || data.mensaje || "Error al registrarse");
         
         showNotification("Registro exitoso. Ahora inicia sesión.");
         switchAuth('login');
