@@ -1,4 +1,5 @@
 const Cliente = require('../models/Cliente');
+const User = require('../models/User');
 
 const clientesController = {
   getAll: async (req, res) => {

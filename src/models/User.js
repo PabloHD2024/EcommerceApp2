@@ -31,6 +31,10 @@ const User = sequelize.define("User", {
         validate: {
             isIn: [["admin", "client"]]
         }
+    },
+    carrito: {
+        type: DataTypes.TEXT,
+        allowNull: true
     }
 });
 
