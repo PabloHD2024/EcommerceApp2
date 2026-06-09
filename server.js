@@ -1,4 +1,4 @@
-// ========== IMPORTACIONES ==========
+// server.js - Versión corregida
 require("dotenv").config();
 
 const express = require("express");
@@ -14,86 +14,84 @@ const productosRoutes = require("./src/routes/productosRoutes");
 const categoriasRoutes = require("./src/routes/categoriasRoutes");
 const cuponRoutes = require("./src/routes/cuponRoutes");
 const authRoutes = require("./src/routes/authRoutes");
+const clientesRoutes = require("./src/routes/clientesRoutes");
 
 require("./src/models/User");
-// ========== INICIALIZACIÓN ==========
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ========== BASE DE DATOS SQLITE DIRECTA ==========
+// Base de datos SQLite
 const db = new sqlite3.Database("./ecommerce.sqlite");
 
-// Verificar conexión a la BD
 db.get("SELECT 1", (err) => {
   if (err) {
-    console.error(
-      "❌ Error al conectar con la base de datos SQLite:",
-      err.message,
-    );
+    console.error("❌ Error al conectar con la base de datos SQLite:", err.message);
   } else {
     console.log("✅ Conectado a la base de datos SQLite");
   }
 });
 
-// ========== MIDDLEWARE ==========
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static("."));
 
-// ========== RUTAS PRINCIPALES ==========
+// Servir archivos estáticos - Configuración CORRECTA
+app.use(express.static(__dirname)); // Sirve todo desde la raíz
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/js', express.static(path.join(__dirname, 'js')));
+app.use('/img', express.static(path.join(__dirname, 'img')));
+
+// Redirecciones para páginas
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/index.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/admin.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'html', 'admin.html'));
+});
+
+app.get('/productos.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'html', 'productos.html'));
+});
+
+app.get('/cart.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'html', 'cart.html'));
+});
+
+app.get('/login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'html', 'login.html'));
+});
+
+app.get('/contacto.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'html', 'contacto.html'));
+});
+
+// API Routes
 app.use("/api/productos", productosRoutes);
 app.use("/api/categorias", categoriasRoutes);
 app.use("/api/cupones", cuponRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/clientes", clientesRoutes);
 
-
-// Endpoint simple de diagnóstico
-app.get("/api", (req, res) => {
-  res.json({
-    mensaje: "API funcionando correctamente",
-    endpoints: [
-      "GET /api/productos",
-      "GET /api/productos?categoria=...",
-      "GET /api/categorias",
-      "GET /api/cupones",
-      "POST /api/auth/login",
-      "POST /api/checkout",
-    ],
-  });
-});
-
-// ========== CHECKOUT ==========
-// Valida desde backend que no se puedan comprar productos vencidos o sin stock
-// y descuenta el stock vendido si la compra es válida.
+// Checkout endpoint
 app.post("/api/checkout", async (req, res) => {
   try {
     const { carrito, total, cupon_aplicado } = req.body;
 
     if (!carrito || !Array.isArray(carrito) || carrito.length === 0) {
-      return res.status(400).json({
-        mensaje: "El carrito está vacío o tiene un formato inválido",
-      });
+      return res.status(400).json({ mensaje: "El carrito está vacío" });
     }
 
     const today = new Date();
-    const productosParaActualizar = [];
 
     for (const item of carrito) {
       const idProducto = Number(item.id);
-      const cantidadSolicitada = Number(item.quantity || item.cantidad || 1);
-
-      if (!idProducto) {
-        return res.status(400).json({
-          mensaje: "Uno de los productos del carrito no tiene un ID válido",
-        });
-      }
-
-      if (!cantidadSolicitada || cantidadSolicitada <= 0) {
-        return res.status(400).json({
-          mensaje:
-            "Uno de los productos del carrito tiene una cantidad inválida",
-        });
-      }
+      const cantidadSolicitada = Number(item.quantity || 1);
 
       const producto = await Producto.findOne({
         where: {
@@ -105,59 +103,33 @@ app.post("/api/checkout", async (req, res) => {
 
       if (!producto) {
         return res.status(400).json({
-          mensaje: `El producto ${item.name || item.nombre || idProducto} no está vigente o no existe. No se puede finalizar la compra.`,
+          mensaje: `Producto ${item.name} no está vigente`
         });
       }
 
       if (producto.stock < cantidadSolicitada) {
         return res.status(400).json({
-          mensaje: `No hay stock suficiente para ${producto.nombre}. Stock disponible: ${producto.stock}`,
+          mensaje: `Stock insuficiente para ${producto.nombre}`
         });
       }
 
-      productosParaActualizar.push({
-        producto,
-        cantidad: cantidadSolicitada,
-      });
+      await producto.update({ stock: producto.stock - cantidadSolicitada });
     }
 
-    for (const item of productosParaActualizar) {
-      await item.producto.update({
-        stock: item.producto.stock - item.cantidad,
-      });
-    }
-
-    console.log("✅ Nueva compra validada y stock descontado:", {
-      carrito,
-      total,
-      cupon_aplicado,
-    });
-
-    res.json({
-      mensaje: "Compra realizada con éxito",
-      total: total,
-      cupon: cupon_aplicado || null,
-    });
+    res.json({ mensaje: "Compra realizada con éxito", total });
   } catch (error) {
-    console.error("❌ Error en checkout:", error);
-
-    res.status(500).json({
-      mensaje: "Error interno al procesar el checkout",
-      detalle: error.message,
-    });
+    console.error("Error en checkout:", error);
+    res.status(500).json({ mensaje: "Error interno" });
   }
 });
-// ========== INICIAR SERVIDOR ==========
-sequelize
-  .sync({ alter: true })
-  .then(() => {
-    console.log("✅ Modelos sincronizados con SQLite");
 
+// Iniciar servidor
+sequelize.sync({ alter: true })
+  .then(() => {
     app.listen(PORT, () => {
-      console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-      console.log(`📁 Sirviendo archivos desde: ${__dirname}`);
+      console.log(`🚀 Servidor en http://localhost:${PORT}`);
     });
   })
   .catch((error) => {
-    console.error("❌ Error al sincronizar Sequelize:", error);
+    console.error("Error:", error);
   });

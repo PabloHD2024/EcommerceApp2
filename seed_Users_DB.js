@@ -8,13 +8,15 @@ const usuariosIniciales = [
         name: "Administrador de pruebas",
         email: "admin@example.com",
         password: "123456",
-        role: "admin"
+        role: "admin",
+        carrito: []
     },
     {
         name: "Cliente de pruebas",
         email: "cliente@example.com",
         password: "123456",
-        role: "client"
+        role: "client",
+        carrito: []
     }
 ];
 

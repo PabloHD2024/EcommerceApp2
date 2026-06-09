@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <title>Tienda Online</title>
 </head>
@@ -25,7 +25,8 @@
                 <li><a href="./html/productos.html">Productos</a></li>
                 <li><a href="./html/contacto.html">Contacto</a></li>
                 <li><a href="./html/cart.html"><i class="fa-solid fa-cart-shopping"></i><span id="cart-count">0</span></a></li>
-                <li><a href="./html/login.html" class="nav-login">Login</a></li>
+                <li><a href="./html/login.html" id="btn-nav-login" class="nav-login">Login</a></li>
+                <li><a href="#" id="btn-nav-logout" class="nav-login" onclick="logoutUsuario(); return false;" style="display:none;">Salir</a></li>
             </ul>
         </nav>
     </header>
@@ -119,6 +120,6 @@
     <!-- Notificación flotante (se mostrará al añadir al carrito) -->
     <div id="notification" class="notification"></div>
     
-    <script src="js/main.js"></script>
+    <script src="/js/main.js"></script>
 </body>
 </html>

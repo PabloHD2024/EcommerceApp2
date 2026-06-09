@@ -65,6 +65,40 @@ const authController = {
                 detalle: error.message
             });
         }
+    },
+
+    register: async (req, res) => {
+        try {
+            const { name, email, password } = req.body;
+
+            if (!name || !email || !password) {
+                return res.status(400).json({ success: false, message: "Todos los campos son obligatorios" });
+            }
+
+            // Validar si el email ya existe
+            const existeUsuario = await User.findOne({ where: { email } });
+            if (existeUsuario) {
+                return res.status(400).json({ success: false, message: "El correo electrónico ya está registrado" });
+            }
+
+            // Crear el usuario en la BD (Por defecto rol 'user')
+            // Nota: Tu modelo 'User' debería encriptar la contraseña mediante hooks de Sequelize antes de guardar
+            await User.create({
+                name,
+                email,
+                password,
+                role: "user" 
+            });
+
+            res.status(201).json({
+                success: true,
+                message: "Usuario registrado con éxito. Ya podés iniciar sesión."
+            });
+
+        } catch (error) {
+            console.error("Error en registro:", error);
+            res.status(500).json({ success: false, message: "Error al registrar el usuario", detalle: error.message });
+        }
     }
 };
 
