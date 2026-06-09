@@ -22,16 +22,51 @@ function updateCartCount() {
 }
 
 // Función para mostrar notificación
-function showNotification(message) {
+// function showNotification(message, tipo, success = true) {
+//   let notification = document.getElementById("notification");
+
+//   if (!notification) {
+//     notification = document.createElement("div");
+//     notification.id = "notification";
+//     notification.className = "notification";
+//     document.body.appendChild(notification);
+//   }
+
+//   if( tipo === 'error') {
+//       notification.style.backgroundColor = '#e74c3c';
+//     } else {
+//       notification.style.backgroundColor = '#2ecc71';
+//   }
+
+//   notification.textContent = message;
+//   notification.classList.add("show");
+
+//   setTimeout(() => {
+//     notification.classList.remove("show");
+//   }, 2000);
+// }
+
+function showNotification(message, tipo = 'success') {
   let notification = document.getElementById("notification");
 
+  // 1. Nos aseguramos de que exista
   if (!notification) {
     notification = document.createElement("div");
     notification.id = "notification";
-    notification.className = "notification";
     document.body.appendChild(notification);
   }
 
+  // 2. Limpiamos clases de color anteriores para que no se mezclen
+  notification.className = "notification"; 
+
+  // 3. Asignamos la clase correspondiente según el tipo
+  if (tipo === 'error') {
+    notification.classList.add("notif-error");
+  } else {
+    notification.classList.add("notif-success"); // Tu nuevo color (azul)
+  }
+
+  // 4. Mostramos el mensaje y activamos la animación
   notification.textContent = message;
   notification.classList.add("show");
 
@@ -46,7 +81,7 @@ function addToCart(producto) {
 
   if (stock <= 0) {
     showNotification(
-      `✕ ${producto.name || producto.nombre} no tiene stock disponible`,
+      `✕ ${producto.name || producto.nombre} no tiene stock disponible`, 'error'
     );
     return;
   }
@@ -61,6 +96,7 @@ function addToCart(producto) {
     if (existingProduct.quantity >= stock) {
       showNotification(
         `✕ No hay más stock disponible de ${producto.name || producto.nombre}`,
+        'error'
       );
       return;
     }
@@ -80,11 +116,10 @@ function addToCart(producto) {
   }
 
   saveCart(cart);
-  showNotification(`✓ ${producto.name || producto.nombre} añadido al carrito`);
+  showNotification(`✓ ${producto.name || producto.nombre} añadido al carrito`,'success');
 
   if (
-    typeof renderCart === "function" &&
-    document.getElementById("cart-items")
+    typeof renderCart === "function" && document.getElementById("cart-items")
   ) {
     renderCart();
   }
@@ -899,3 +934,134 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Cargar productos destacados en el index
 loadFeaturedProducts();
+
+//Formulario Login
+
+function switchAuth(view) {
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
+    const formLogin = document.getElementById('form-login');
+    const formRegister = document.getElementById('form-register');
+
+    if (view === 'login') {
+        // Activa pestaña Login
+        tabLogin.classList.add('active');
+        tabRegister.classList.remove('active');
+        
+        // Mostrar formulario Login, ocultar Registro
+        formLogin.classList.add('active');
+        formRegister.classList.remove('active');
+    } else if (view === 'register') {
+        // Activa pestaña Registro
+        tabRegister.classList.add('active');
+        tabLogin.classList.remove('active');
+        
+        // Mostrar formulario Registro, ocultar Login
+        formRegister.classList.add('active');
+        formLogin.classList.remove('active');
+    }
+}
+
+// Codigo admin.html
+
+// ========== NAVEGACIÓN INTERNA DEL DASHBOARD (ADMIN) ==========
+function switchAdminView(view) {
+  const navProd = document.getElementById('nav-prod');
+  const navCust = document.getElementById('nav-cust');
+  const secProducts = document.getElementById('admin-products');
+  const secCustomers = document.getElementById('admin-customers');
+
+  if (!secProducts || !secCustomers) return;
+
+  if (view === 'products') {
+    navProd.classList.add('active');
+    navCust.classList.remove('active');
+    secProducts.classList.add('active');
+    secCustomers.classList.remove('active');
+  } else {
+    navCust.classList.add('active');
+    navProd.classList.remove('active');
+    secCustomers.classList.add('active');
+    secProducts.classList.remove('active');
+  }
+}
+
+// ========== MANEJO DEL MODAL DE EDICIÓN / CREACIÓN ==========
+function openAdminModal(type) {
+  const modal = document.getElementById('admin-modal');
+  const container = document.getElementById('modal-form-content');
+  if (!modal || !container) return;
+
+  container.innerHTML = ""; // Limpiar contenido anterior
+
+  if (type === 'product') {
+    container.innerHTML = `
+      <h2>Nuevo Producto</h2>
+      <p class="auth-subtitle">Completá los campos para subir un producto al catálogo.</p>
+      <form class="contact-form" id="form-admin-product">
+        <div class="input-group">
+          <label>Nombre del Producto</label>
+          <input type="text" placeholder="Ej. Auriculares Bluetooth" required>
+        </div>
+        <div class="input-group">
+          <label>Precio ($)</label>
+          <input type="number" placeholder="Ej. 15000" required>
+        </div>
+        <div class="input-group">
+          <label>Stock Inicial</label>
+          <input type="number" placeholder="Ej. 10" required>
+        </div>
+        <div class="input-group">
+          <label>Categoría</label>
+          <input type="text" placeholder="Ej. audio" required>
+        </div>
+        <div class="input-group">
+          <label>URL de la Imagen</label>
+          <input type="text" placeholder="/img/producto.png">
+        </div>
+        <button type="submit" class="btn-auth">Guardar Producto</button>
+      </form>
+    `;
+  } else if (type === 'customer') {
+    container.innerHTML = `
+      <h2>Nuevo Cliente</h2>
+      <p class="auth-subtitle">Registrá manualmente un nuevo usuario administrador o cliente.</p>
+      <form class="contact-form" id="form-admin-customer">
+        <div class="input-group">
+          <label>Nombre Completo</label>
+          <input type="text" placeholder="Ej. Carlos Gómez" required>
+        </div>
+        <div class="input-group">
+          <label>Correo Electrónico</label>
+          <input type="email" placeholder="carlos@correo.com" required>
+        </div>
+        <div class="input-group">
+          <label>Contraseña Temporal</label>
+          <input type="password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn-auth">Registrar Cliente</button>
+      </form>
+    `;
+  }
+
+  modal.classList.add('active');
+  document.body.style.overflow = "hidden"; // Bloquea scroll trasero
+
+  // Captura el submit del formulario inyectado
+  const activeForm = container.querySelector('form');
+  if (activeForm) {
+    activeForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      showNotification("✓ Datos guardados correctamente (Simulado)");
+      closeAdminModal();
+    });
+  }
+}
+
+function closeAdminModal() {
+  const modal = document.getElementById('admin-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    document.body.style.overflow = ""; // Restaura el scroll
+  }
+}
