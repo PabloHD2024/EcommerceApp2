@@ -320,7 +320,7 @@ Las contraseñas no se guardan en texto plano. Se procesan con `bcryptjs` antes 
 
 ## Endpoints disponibles
 
-### Autenticación
+## Autenticación
 
 ```http
 POST /api/auth/login
