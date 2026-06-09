@@ -22,7 +22,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Base de datos SQLite
-const db = new sqlite3.Database("./ecommerce.sqlite");
+const db = new sqlite3.Database(path.join(__dirname, "ecommerce.sqlite"));
 
 db.get("SELECT 1", (err) => {
   if (err) {

@@ -1,6 +1,9 @@
 // ========== VARIABLES GLOBALES ==========
 let allProducts = [];
 let currentCategory = "all";
+let currentProductsPage = 1;
+let productsPagination = null;
+const PRODUCTS_PAGE_LIMIT = 9;
 
 // ========== FUNCIONES DE UTILIDAD ==========
 function showNotification(message, tipo = 'success') {
@@ -106,6 +109,32 @@ function bindAddToCartButtons() {
 }
 
 // ========== FUNCIONES DE PRODUCTOS ==========
+function normalizeProductsResponse(payload) {
+  if (Array.isArray(payload)) {
+    return {
+      data: payload,
+      metadata: {
+        totalItems: payload.length,
+        totalPages: 1,
+        currentPage: 1,
+        limit: payload.length,
+        currentItems: payload.length,
+        fromItem: payload.length ? 1 : 0,
+        toItem: payload.length,
+        hasPreviousPage: false,
+        hasNextPage: false,
+        previousPage: null,
+        nextPage: null
+      }
+    };
+  }
+
+  return {
+    data: payload?.data || [],
+    metadata: payload?.metadata || {}
+  };
+}
+
 function displayFilteredProducts(products) {
   const productsList = document.getElementById("products-list");
   if (!productsList) return;
@@ -165,37 +194,96 @@ function displayFilteredProducts(products) {
   bindAddToCartButtons();
 }
 
-async function loadProductsPage() {
+function renderProductsPagination(metadata) {
+  const productsList = document.getElementById("products-list");
+  if (!productsList) return;
+
+  let pagination = document.getElementById("products-pagination");
+  if (!pagination) {
+    pagination = document.createElement("div");
+    pagination.id = "products-pagination";
+    pagination.className = "pagination-container";
+    productsList.insertAdjacentElement("afterend", pagination);
+  }
+
+  const totalPages = Number(metadata?.totalPages) || 0;
+  if (totalPages <= 1) {
+    pagination.innerHTML = "";
+    return;
+  }
+
+  const currentPage = Number(metadata.currentPage) || 1;
+  const fromItem = Number(metadata.fromItem) || 0;
+  const toItem = Number(metadata.toItem) || 0;
+  const totalItems = Number(metadata.totalItems) || 0;
+
+  pagination.innerHTML = `
+    <button class="pagination-btn" data-page="${currentPage - 1}" ${metadata.hasPreviousPage ? "" : "disabled"}>
+      <i class="fa-solid fa-chevron-left"></i> Anterior
+    </button>
+    <span class="pagination-info">
+      Página ${currentPage} de ${totalPages} · Mostrando ${fromItem}-${toItem} de ${totalItems}
+    </span>
+    <button class="pagination-btn" data-page="${currentPage + 1}" ${metadata.hasNextPage ? "" : "disabled"}>
+      Siguiente <i class="fa-solid fa-chevron-right"></i>
+    </button>
+  `;
+
+  pagination.querySelectorAll(".pagination-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const page = Number(btn.dataset.page);
+      if (page > 0) loadProductsPage(page);
+    });
+  });
+}
+
+async function loadProductsPage(page = 1) {
   const productsList = document.getElementById("products-list");
   if (!productsList) return;
   
   try {
+    currentProductsPage = Math.max(Number(page) || 1, 1);
+    const params = new URLSearchParams({
+      page: currentProductsPage,
+      limit: PRODUCTS_PAGE_LIMIT
+    });
+
+    if (currentCategory !== "all") {
+      params.set("categoria", currentCategory);
+    }
+
     productsList.innerHTML = '<p>Cargando productos...</p>';
-    const response = await fetch("/api/productos");
+    const response = await fetch(`/api/productos?${params.toString()}`);
     
     if (!response.ok) throw new Error("Error al cargar productos");
     
-    allProducts = await response.json();
+    const payload = await response.json();
+    const paginated = normalizeProductsResponse(payload);
+    allProducts = paginated.data;
+    productsPagination = paginated.metadata;
     
     if (allProducts.length === 0) {
       productsList.innerHTML = '<p>No hay productos disponibles</p>';
+      renderProductsPagination(productsPagination);
       return;
     }
     
     // Inicializar filtros
     document.querySelectorAll(".filter-btn").forEach(btn => {
-      btn.addEventListener("click", (e) => {
+      btn.onclick = () => {
         document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         currentCategory = btn.dataset.category;
-        displayFilteredProducts(allProducts);
-      });
+        loadProductsPage(1);
+      };
     });
     
     displayFilteredProducts(allProducts);
+    renderProductsPagination(productsPagination);
   } catch (error) {
     console.error("Error:", error);
     productsList.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    renderProductsPagination(null);
   }
 }
 
@@ -204,8 +292,9 @@ async function loadFeaturedProducts() {
   if (!container) return;
   
   try {
-    const response = await fetch("/api/productos");
-    const products = await response.json();
+    const response = await fetch("/api/productos?page=1&limit=4");
+    const payload = await response.json();
+    const products = normalizeProductsResponse(payload).data;
     const destacados = products.slice(0, 4);
     
     container.innerHTML = "";
@@ -474,8 +563,9 @@ async function loadAdminProducts() {
   if (!container) return;
   
   try {
-    const response = await fetch("/api/productos");
-    const products = await response.json();
+    const response = await fetch("/api/productos?page=1&limit=100");
+    const payload = await response.json();
+    const products = normalizeProductsResponse(payload).data;
     
     if (!products.length) {
       container.innerHTML = '<p>No hay productos</p>';
@@ -537,7 +627,10 @@ function openAdminModal(type) {
     try {
       const response = await fetch("/api/productos", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(localStorage.getItem("token") ? { "Authorization": `Bearer ${localStorage.getItem("token")}` } : {})
+        },
         body: JSON.stringify(data)
       });
       
@@ -566,7 +659,10 @@ window.editProduct = async (id) => {
 window.deleteProduct = async (id) => {
   if (!confirm("¿Eliminar producto?")) return;
   try {
-    await fetch(`/api/productos/${id}`, { method: "DELETE" });
+    await fetch(`/api/productos/${id}`, {
+      method: "DELETE",
+      headers: localStorage.getItem("token") ? { "Authorization": `Bearer ${localStorage.getItem("token")}` } : {}
+    });
     showNotification("Producto eliminado");
     loadAdminProducts();
   } catch (error) {
@@ -628,7 +724,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderCart();
   }
   
-  if (document.getElementById("admin-products")) {
+  if (document.getElementById("admin-products") && !document.querySelector('.admin-body')) {
     loadAdminProducts();
   }
   

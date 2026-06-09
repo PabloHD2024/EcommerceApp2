@@ -5,6 +5,9 @@ const productosController = {
   getAll: async (req, res) => {
     try {
       const { categoria } = req.query;
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+      const limit = Math.max(parseInt(req.query.limit, 10) || 6, 1);
+      const offset = (page - 1) * limit;
       const today = new Date();
 
       const whereCondition = {
@@ -16,8 +19,11 @@ const productosController = {
         whereCondition.categoria = categoria;
       }
 
-      const productos = await Producto.findAll({
+      const { count, rows: productos } = await Producto.findAndCountAll({
         where: whereCondition,
+        order: [["id", "ASC"]],
+        limit,
+        offset,
       });
 
       const productosFormateados = productos.map((producto) => ({
@@ -35,7 +41,25 @@ const productosController = {
         validTo: producto.validTo,
       }));
 
-      res.json(productosFormateados);
+      const totalPages = Math.ceil(count / limit);
+
+      res.json({
+        success: true,
+        data: productosFormateados,
+        metadata: {
+          totalItems: count,
+          totalPages,
+          currentPage: page,
+          limit,
+          currentItems: productosFormateados.length,
+          fromItem: count === 0 ? 0 : offset + 1,
+          toItem: offset + productosFormateados.length,
+          hasPreviousPage: page > 1,
+          hasNextPage: page < totalPages,
+          previousPage: page > 1 ? page - 1 : null,
+          nextPage: page < totalPages ? page + 1 : null,
+        },
+      });
     } catch (error) {
       console.error("ERROR REAL EN getAll PRODUCTOS:", error);
       res.status(500).json({
