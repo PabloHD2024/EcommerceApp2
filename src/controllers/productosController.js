@@ -4,7 +4,7 @@ const { Op } = require("sequelize");
 const productosController = {
   getAll: async (req, res) => {
     try {
-      const { categoria } = req.query;
+      const { categoria, nombre } = req.query;
       const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
       const limit = Math.max(parseInt(req.query.limit, 10) || 6, 1);
       const offset = (page - 1) * limit;
@@ -15,8 +15,14 @@ const productosController = {
         validTo: { [Op.gte]: today },
       };
 
-      if (categoria) {
-        whereCondition.categoria = categoria;
+      if (categoria && categoria.trim()) {
+        whereCondition.categoria = categoria.trim();
+      }
+
+      if (nombre && nombre.trim()) {
+        whereCondition.nombre = {
+          [Op.like]: `%${nombre.trim()}%`,
+        };
       }
 
       const { count, rows: productos } = await Producto.findAndCountAll({

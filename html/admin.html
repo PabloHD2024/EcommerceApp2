@@ -123,6 +123,387 @@
             font-size: 1.1rem;
         }
 
+        .admin-body {
+            background: #f4f7f9;
+            color: var(--dark-color);
+            overflow-x: hidden;
+        }
+
+        .admin-body .dashboard-layout {
+            display: grid;
+            grid-template-columns: 260px minmax(0, 1fr);
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        .admin-body .admin-sidebar {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            background: var(--primary-color);
+            box-shadow: 6px 0 24px rgba(44, 62, 80, 0.12);
+        }
+
+        .admin-body .sidebar-brand {
+            padding: 32px 22px;
+            border-bottom: 1px solid rgba(255,255,255,0.18);
+            text-align: left;
+        }
+
+        .admin-body .sidebar-brand .logo {
+            font-size: 1.8rem;
+            line-height: 1;
+            white-space: nowrap;
+            letter-spacing: 0;
+        }
+
+        .admin-body .sidebar-nav {
+            display: flex;
+            align-items: center;
+            padding: 0;
+        }
+
+        .admin-body .sidebar-nav ul {
+            width: 100%;
+            gap: 10px;
+            padding: 0 54px;
+        }
+
+        .admin-body .sidebar-link {
+            min-height: 42px;
+            padding: 11px 14px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            justify-content: flex-start;
+        }
+
+        .admin-body .sidebar-link:hover,
+        .admin-body .sidebar-link.active {
+            background: rgba(255,255,255,0.12);
+        }
+
+        .admin-body .sidebar-link.active {
+            background: var(--secondary-color);
+            box-shadow: 0 10px 20px rgba(245, 116, 41, 0.22);
+        }
+
+        .admin-body .admin-content {
+            min-width: 0;
+            padding: 34px clamp(22px, 3.5vw, 48px);
+        }
+
+        .admin-body .admin-section {
+            width: 100%;
+            max-width: 1180px;
+            gap: 20px;
+        }
+
+        .admin-body .section-header {
+            gap: 16px;
+        }
+
+        .admin-body .section-header h2 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--primary-color);
+            font-size: clamp(1.45rem, 2vw, 2rem);
+            line-height: 1.2;
+        }
+
+        .admin-body .admin-content .btn-hero {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            border-radius: 8px;
+            background: var(--secondary-color);
+            box-shadow: 0 10px 20px rgba(245, 116, 41, 0.18);
+            cursor: pointer;
+        }
+
+        .admin-filters {
+            display: grid;
+            grid-template-columns: minmax(220px, 1.35fr) minmax(180px, 0.85fr) auto;
+            gap: 14px;
+            align-items: end;
+            background: var(--white);
+            border: 1px solid #dfe7ee;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 10px 28px rgba(44, 62, 80, 0.08);
+        }
+
+        .admin-filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            min-width: 0;
+        }
+
+        .admin-filter-field label {
+            color: var(--primary-color);
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .admin-filter-control,
+        .admin-filter-input {
+            width: 100%;
+            min-height: 42px;
+            border: 1px solid #cfd9e3;
+            border-radius: 8px;
+            background: #fbfcfd;
+            color: var(--dark-color);
+            font: inherit;
+        }
+
+        .admin-filter-control {
+            padding: 0 12px;
+        }
+
+        .admin-filter-input-wrap {
+            position: relative;
+        }
+
+        .admin-filter-input-wrap i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            color: var(--grey-color);
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .admin-filter-input {
+            padding: 0 12px 0 38px;
+        }
+
+        .admin-filter-control:focus,
+        .admin-filter-input:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(245, 116, 41, 0.13);
+            background: var(--white);
+        }
+
+        .admin-filter-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .btn-filter-primary,
+        .btn-filter-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 42px;
+            border-radius: 8px;
+            border: none;
+            padding: 0 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-filter-primary {
+            background: var(--primary-color);
+            color: var(--white);
+        }
+
+        .btn-filter-primary:hover {
+            background: #203247;
+        }
+
+        .btn-filter-secondary {
+            background: #eef3f7;
+            color: var(--primary-color);
+        }
+
+        .btn-filter-secondary:hover {
+            background: #dfe7ee;
+        }
+
+        .admin-body .admin-card {
+            overflow: hidden;
+            padding: 0;
+            border: 1px solid #dfe7ee;
+            border-radius: 8px;
+            background: var(--white);
+            box-shadow: 0 14px 34px rgba(44, 62, 80, 0.1);
+        }
+
+        .admin-card .loading-spinner,
+        .admin-card .empty-state {
+            padding: 56px 24px;
+        }
+
+        .admin-card .empty-state .btn-hero {
+            margin-top: 18px;
+        }
+
+        .admin-table-container {
+            width: 100%;
+            margin-top: 0;
+            overflow-x: auto;
+        }
+
+        .admin-table {
+            min-width: 760px;
+            table-layout: fixed;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        .product-admin-table {
+            min-width: 920px;
+        }
+
+        .admin-table th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            padding: 14px 16px;
+            background: var(--primary-color);
+            color: var(--white);
+            font-size: 0.84rem;
+        }
+
+        .admin-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #edf1f4;
+            color: var(--dark-color);
+            font-size: 0.92rem;
+        }
+
+        .admin-table tbody tr:nth-child(even) {
+            background: #fbfcfd;
+        }
+
+        .admin-table tr:hover {
+            background: #f4f8fb;
+        }
+
+        .admin-table th:last-child,
+        .admin-table td:last-child {
+            width: 190px;
+        }
+
+        .product-admin-table th:nth-child(1),
+        .product-admin-table td:nth-child(1) {
+            width: 70px;
+        }
+
+        .product-admin-table th:nth-child(2),
+        .product-admin-table td:nth-child(2) {
+            width: 96px;
+        }
+
+        .product-admin-table th:nth-child(4),
+        .product-admin-table td:nth-child(4) {
+            width: 130px;
+        }
+
+        .product-admin-table th:nth-child(5),
+        .product-admin-table td:nth-child(5) {
+            width: 110px;
+        }
+
+        .product-admin-table th:nth-child(6),
+        .product-admin-table td:nth-child(6) {
+            width: 160px;
+        }
+
+        .product-admin-table th:nth-child(7),
+        .product-admin-table td:nth-child(7) {
+            width: 190px;
+        }
+
+        .product-name-cell strong {
+            display: block;
+            max-width: 100%;
+            line-height: 1.3;
+            overflow-wrap: anywhere;
+        }
+
+        .product-image-thumb {
+            width: 54px;
+            height: 54px;
+            object-fit: contain;
+            border: 1px solid #e7edf2;
+            border-radius: 8px;
+            background: var(--white);
+            padding: 4px;
+        }
+
+        .stock-pill,
+        .category-chip {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .stock-pill {
+            background: #edf7f0;
+            color: #246b3a;
+        }
+
+        .stock-pill.is-empty {
+            background: #fdebea;
+            color: #a33b32;
+        }
+
+        .category-chip {
+            background: #eef3f7;
+            color: var(--primary-color);
+        }
+
+        .admin-actions {
+            align-items: center;
+        }
+
+        .btn-edit,
+        .btn-delete {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+
+        .admin-pagination {
+            justify-content: space-between;
+            margin: 0;
+            padding: 18px 20px;
+            border-top: 1px solid #edf1f4;
+        }
+
+        .admin-pagination .pagination-btn {
+            border-radius: 8px;
+            background: #eef3f7;
+            color: var(--primary-color);
+        }
+
+        .admin-pagination .pagination-btn:hover:not(:disabled) {
+            background: var(--secondary-color);
+            color: var(--white);
+        }
+
+        .admin-pagination .pagination-info {
+            color: #5c6c7b;
+            font-size: 0.88rem;
+        }
+
         /* Modal mejorado */
         .modal-overlay {
             position: fixed;
@@ -146,8 +527,10 @@
             border-radius: 20px;
             max-width: 500px;
             width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
+            max-height: calc(100vh - 48px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
             position: relative;
             animation: modalSlideIn 0.3s ease;
         }
@@ -193,6 +576,8 @@
 
         .modal-body {
             padding: 25px;
+            min-height: 0;
+            overflow-y: auto;
         }
 
         .form-group {
@@ -239,6 +624,9 @@
             display: flex;
             gap: 10px;
             justify-content: flex-end;
+            flex-shrink: 0;
+            background: var(--white);
+            box-shadow: 0 -8px 18px rgba(44, 62, 80, 0.06);
         }
 
         .btn-modal-cancel {
@@ -273,11 +661,47 @@
 
         /* Responsive para admin */
         @media (max-width: 768px) {
-            .admin-content {
+            .admin-body .dashboard-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-body .admin-sidebar {
+                position: static;
+                display: flex;
+                height: auto;
+                min-height: 0;
+            }
+
+            .admin-body .sidebar-brand {
+                padding: 18px;
+                border-bottom: none;
+                border-right: 1px solid rgba(255,255,255,0.18);
+            }
+
+            .admin-body .sidebar-brand .logo {
+                font-size: 1.35rem;
+            }
+
+            .admin-body .sidebar-nav {
+                overflow-x: auto;
+                padding: 12px;
+            }
+
+            .admin-body .sidebar-nav ul {
+                flex-direction: row;
+                gap: 8px;
+                padding: 0;
+            }
+
+            .sidebar-separator {
+                display: none;
+            }
+
+            .admin-body .admin-content {
                 padding: 20px 15px;
             }
 
-            .section-header {
+            .admin-body .section-header {
                 flex-direction: column;
                 align-items: flex-start;
             }
@@ -291,6 +715,19 @@
             .admin-actions {
                 flex-direction: column;
                 gap: 5px;
+            }
+
+            .admin-filters {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-filter-actions {
+                justify-content: stretch;
+            }
+
+            .btn-filter-primary,
+            .btn-filter-secondary {
+                flex: 1;
             }
 
             .btn-edit, .btn-delete {
@@ -342,6 +779,36 @@
                         <i class="fa-solid fa-plus"></i> Nuevo Producto
                     </button>
                 </div>
+
+                <form class="admin-filters" id="product-filters">
+                    <div class="admin-filter-field">
+                        <label for="product-name-filter">Nombre</label>
+                        <div class="admin-filter-input-wrap">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input
+                                class="admin-filter-input"
+                                type="search"
+                                id="product-name-filter"
+                                placeholder="Buscar producto"
+                                autocomplete="off"
+                            >
+                        </div>
+                    </div>
+                    <div class="admin-filter-field">
+                        <label for="product-category-filter">Categoría</label>
+                        <select class="admin-filter-control" id="product-category-filter">
+                            <option value="">Todas las categorías</option>
+                        </select>
+                    </div>
+                    <div class="admin-filter-actions">
+                        <button type="submit" class="btn-filter-primary">
+                            <i class="fa-solid fa-filter"></i> Filtrar
+                        </button>
+                        <button type="button" class="btn-filter-secondary" onclick="resetProductFilters()">
+                            <i class="fa-solid fa-rotate-left"></i> Limpiar
+                        </button>
+                    </div>
+                </form>
                 
                 <div class="admin-card" id="products-container">
                     <div class="loading-spinner">
@@ -388,7 +855,7 @@
     <!-- Notificación flotante -->
     <div id="notification" class="notification"></div>
 
-    <script src="../js/main.js?v=admin-pagination"></script>
+    <script src="../js/main.js?v=admin-option-a-filters"></script>
     
     <script>
         // Verificación de seguridad al cargar la página
@@ -428,6 +895,87 @@
 
         const ADMIN_PRODUCTS_LIMIT = 6;
         let adminProductsPage = 1;
+        const adminProductFilters = {
+            nombre: '',
+            categoria: ''
+        };
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function hasActiveProductFilters() {
+            return Boolean(adminProductFilters.nombre || adminProductFilters.categoria);
+        }
+
+        function buildProductsUrl(page) {
+            const params = new URLSearchParams({
+                page: String(page),
+                limit: String(ADMIN_PRODUCTS_LIMIT)
+            });
+
+            if (adminProductFilters.nombre) {
+                params.set('nombre', adminProductFilters.nombre);
+            }
+
+            if (adminProductFilters.categoria) {
+                params.set('categoria', adminProductFilters.categoria);
+            }
+
+            return `/api/productos?${params.toString()}`;
+        }
+
+        async function loadProductCategories() {
+            const categorySelect = document.getElementById('product-category-filter');
+            if (!categorySelect) return;
+
+            try {
+                const response = await fetch('/api/categorias');
+                if (!response.ok) throw new Error('Error al cargar categorías');
+
+                const categorias = await response.json();
+                const options = ['<option value="">Todas las categorías</option>'];
+
+                categorias.forEach((categoria) => {
+                    const selected = categoria === adminProductFilters.categoria ? 'selected' : '';
+                    options.push(`<option value="${escapeHtml(categoria)}" ${selected}>${escapeHtml(categoria)}</option>`);
+                });
+
+                categorySelect.innerHTML = options.join('');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function setupProductFilters() {
+            const form = document.getElementById('product-filters');
+            if (!form) return;
+
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                adminProductFilters.nombre = document.getElementById('product-name-filter')?.value.trim() || '';
+                adminProductFilters.categoria = document.getElementById('product-category-filter')?.value.trim() || '';
+                loadProducts(1);
+            });
+        }
+
+        function resetProductFilters() {
+            adminProductFilters.nombre = '';
+            adminProductFilters.categoria = '';
+
+            const nameInput = document.getElementById('product-name-filter');
+            const categorySelect = document.getElementById('product-category-filter');
+
+            if (nameInput) nameInput.value = '';
+            if (categorySelect) categorySelect.value = '';
+
+            loadProducts(1);
+        }
         
         function renderAdminProductsPagination(metadata) {
             if (!metadata || Number(metadata.totalPages) <= 1) {
@@ -454,7 +1002,7 @@
             adminProductsPage = Math.max(Number(page) || 1, 1);
             
             try {
-                const response = await fetch(`/api/productos?page=${adminProductsPage}&limit=${ADMIN_PRODUCTS_LIMIT}`);
+                const response = await fetch(buildProductsUrl(adminProductsPage));
                 if (!response.ok) throw new Error('Error al cargar productos');
                 
                 const payload = await response.json();
@@ -470,10 +1018,16 @@
                     container.innerHTML = `
                         <div class="empty-state">
                             <i class="fa-solid fa-box-open"></i>
-                            <p>No hay productos registrados</p>
-                            <button class="btn-hero" onclick="openProductModal()">
-                                <i class="fa-solid fa-plus"></i> Crear primer producto
-                            </button>
+                            <p>${hasActiveProductFilters() ? 'No hay productos que coincidan con el filtro' : 'No hay productos registrados'}</p>
+                            ${hasActiveProductFilters() ? `
+                                <button class="btn-hero" onclick="resetProductFilters()">
+                                    <i class="fa-solid fa-rotate-left"></i> Limpiar filtros
+                                </button>
+                            ` : `
+                                <button class="btn-hero" onclick="openProductModal()">
+                                    <i class="fa-solid fa-plus"></i> Crear primer producto
+                                </button>
+                            `}
                         </div>
                     `;
                     return;
@@ -481,7 +1035,7 @@
                 
                 let html = `
                     <div class="admin-table-container">
-                        <table class="admin-table">
+                        <table class="admin-table product-admin-table">
                             <thead>
                                 <tr>
                                     <th>ID</th>
@@ -498,19 +1052,19 @@
                 
                 products.forEach(product => {
                     const nombre = product.name || product.nombre || 'Sin nombre';
-                    const precio = (product.price || product.precio || 0).toLocaleString('es-AR');
-                    const stock = product.stock || 0;
+                    const precio = Number(product.price ?? product.precio ?? 0).toLocaleString('es-AR');
+                    const stock = Number(product.stock ?? 0);
                     const categoria = product.categoria || product.category || 'Sin categoría';
                     const imagen = product.image || product.imagen || '../img/placeholder.png';
                     
                     html += `
                         <tr>
-                            <td>${product.id}</td>
-                            <td><img src="${imagen}" alt="${nombre}" class="product-image-thumb" onerror="this.src='../img/placeholder.png'"></td>
-                            <td><strong>${nombre}</strong></td>
+                            <td>${escapeHtml(product.id)}</td>
+                            <td><img src="${escapeHtml(imagen)}" alt="${escapeHtml(nombre)}" class="product-image-thumb" onerror="this.src='../img/placeholder.png'"></td>
+                            <td class="product-name-cell"><strong>${escapeHtml(nombre)}</strong></td>
                             <td>$${precio}</td>
-                            <td>${stock}</td>
-                            <td>${categoria}</td>
+                            <td><span class="stock-pill ${stock <= 0 ? 'is-empty' : ''}">${stock}</span></td>
+                            <td><span class="category-chip">${escapeHtml(categoria)}</span></td>
                             <td class="admin-actions">
                                 <button class="btn-edit" onclick="editProduct(${product.id})">
                                     <i class="fa-solid fa-pencil"></i> Editar
@@ -633,6 +1187,7 @@
         
         function openProductModal(product = null) {
             const modal = document.getElementById('admin-modal');
+            const modalContent = modal.querySelector('.modal-content');
             const modalTitle = document.getElementById('modal-title');
             const modalBody = document.getElementById('modal-body');
             
@@ -683,7 +1238,8 @@
             // Limpiar footer anterior si existe
             const oldFooter = modal.querySelector('.modal-footer');
             if (oldFooter) oldFooter.remove();
-            modal.appendChild(footer);
+            modalContent.appendChild(footer);
+            modalBody.scrollTop = 0;
             
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -739,6 +1295,7 @@
                 
                 showNotification(productId ? '✓ Producto actualizado' : '✓ Producto creado');
                 closeAdminModal();
+                await loadProductCategories();
                 await loadProducts(productId ? adminProductsPage : 1);
                 
             } catch (error) {
@@ -777,6 +1334,7 @@
                 }
                 
                 showNotification('✓ Producto eliminado');
+                await loadProductCategories();
                 await loadProducts(adminProductsPage);
                 
             } catch (error) {
@@ -789,6 +1347,7 @@
         
         function openCustomerModal(customer = null) {
             const modal = document.getElementById('admin-modal');
+            const modalContent = modal.querySelector('.modal-content');
             const modalTitle = document.getElementById('modal-title');
             const modalBody = document.getElementById('modal-body');
             
@@ -830,7 +1389,8 @@
             
             const oldFooter = modal.querySelector('.modal-footer');
             if (oldFooter) oldFooter.remove();
-            modal.appendChild(footer);
+            modalContent.appendChild(footer);
+            modalBody.scrollTop = 0;
             
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -1017,6 +1577,8 @@
         
         // ========== INICIALIZACIÓN ==========
         document.addEventListener('DOMContentLoaded', () => {
+            setupProductFilters();
+            loadProductCategories();
             loadProducts();
         });
         
@@ -1034,6 +1596,7 @@
         window.logoutUsuario = logoutUsuario;
         window.loadProducts = loadProducts;
         window.loadCustomers = loadCustomers;
+        window.resetProductFilters = resetProductFilters;
     </script>
 </body>
 </html>

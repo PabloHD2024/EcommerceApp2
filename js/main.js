@@ -237,6 +237,48 @@ function renderProductsPagination(metadata) {
   });
 }
 
+function createCategoryFilterButton(label, category) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = `filter-btn ${currentCategory === category ? "active" : ""}`;
+  button.dataset.category = category;
+  button.textContent = label;
+  return button;
+}
+
+function bindCategoryFilterButtons() {
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentCategory = btn.dataset.category;
+      loadProductsPage(1);
+    };
+  });
+}
+
+async function loadProductCategories() {
+  const filtersContainer = document.getElementById("category-filters");
+  if (!filtersContainer) return;
+
+  try {
+    const response = await fetch("/api/categorias");
+    if (!response.ok) throw new Error("Error al cargar categorías");
+
+    const categorias = await response.json();
+    filtersContainer.innerHTML = "";
+    filtersContainer.appendChild(createCategoryFilterButton("Todos", "all"));
+
+    categorias.forEach(categoria => {
+      filtersContainer.appendChild(createCategoryFilterButton(categoria, categoria));
+    });
+  } catch (error) {
+    console.error("Error cargando categorías:", error);
+  }
+
+  bindCategoryFilterButtons();
+}
+
 async function loadProductsPage(page = 1) {
   const productsList = document.getElementById("products-list");
   if (!productsList) return;
@@ -267,17 +309,7 @@ async function loadProductsPage(page = 1) {
       renderProductsPagination(productsPagination);
       return;
     }
-    
-    // Inicializar filtros
-    document.querySelectorAll(".filter-btn").forEach(btn => {
-      btn.onclick = () => {
-        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        currentCategory = btn.dataset.category;
-        loadProductsPage(1);
-      };
-    });
-    
+    bindCategoryFilterButtons();
     displayFilteredProducts(allProducts);
     renderProductsPagination(productsPagination);
   } catch (error) {
@@ -713,7 +745,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Cargar productos según la página
   if (document.getElementById("products-list")) {
-    loadProductsPage();
+    loadProductCategories().finally(() => loadProductsPage());
   }
   
   if (document.getElementById("featured-products")) {
