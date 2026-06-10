@@ -497,6 +497,32 @@
             color: var(--primary-color);
         }
 
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            min-height: 28px;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status-chip.is-valid {
+            background: #edf7f0;
+            color: #246b3a;
+        }
+
+        .status-chip.is-invalid {
+            background: #fdebea;
+            color: #a33b32;
+        }
+
+        .status-chip.is-paused {
+            background: #fff5db;
+            color: #875f13;
+        }
+
         .admin-actions {
             align-items: center;
         }
@@ -798,6 +824,11 @@
                             <i class="fa-solid fa-users"></i> Clientes
                         </button>
                     </li>
+                    <li>
+                        <button class="sidebar-link" id="nav-coup" onclick="switchAdminView('coupons')">
+                            <i class="fa-solid fa-ticket"></i> Descuentos
+                        </button>
+                    </li>
                     <li class="sidebar-separator"></li>
                     <li>
                         <button class="sidebar-link logout-link" onclick="logoutUsuario();">
@@ -884,6 +915,28 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Sección Cupones -->
+            <section id="admin-coupons" class="admin-section">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-ticket"></i> Gestión de Descuentos</h2>
+                    <div class="section-actions">
+                        <button class="btn-export-csv" type="button" onclick="exportCouponsCsv()">
+                            <i class="fa-solid fa-file-csv"></i> Bajar Excel/CSV
+                        </button>
+                        <button class="btn-hero" style="margin: 0; background: var(--secondary-color);" onclick="openCouponModal()">
+                            <i class="fa-solid fa-plus"></i> Nuevo Cupón
+                        </button>
+                    </div>
+                </div>
+
+                <div class="admin-card" id="coupons-container">
+                    <div class="loading-spinner">
+                        <i class="fa-solid fa-spinner fa-pulse"></i>
+                        <p>Cargando cupones...</p>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -905,7 +958,7 @@
     <!-- Notificación flotante -->
     <div id="notification" class="notification"></div>
 
-    <script src="../js/main.js?v=admin-option-a-filters"></script>
+    <script src="../js/main.js?v=admin-coupons"></script>
     
     <script>
         // Verificación de seguridad al cargar la página
@@ -965,12 +1018,16 @@
 
         const ADMIN_PRODUCTS_LIMIT = 6;
         const ADMIN_CUSTOMERS_LIMIT = 8;
+        const ADMIN_COUPONS_LIMIT = 8;
         let adminProductsPage = 1;
         let adminCustomersPage = 1;
+        let adminCouponsPage = 1;
         let lastAdminProducts = [];
         let lastProductsPagination = null;
         let lastAdminCustomers = [];
         let lastCustomersPagination = null;
+        let lastAdminCoupons = [];
+        let lastCouponsPagination = null;
         const adminProductFilters = {
             nombre: '',
             categoria: ''
@@ -1013,6 +1070,15 @@
             });
 
             return `/api/clientes?${params.toString()}`;
+        }
+
+        function buildCouponsUrl(page, limit = ADMIN_COUPONS_LIMIT) {
+            const params = new URLSearchParams({
+                page: String(page),
+                limit: String(limit)
+            });
+
+            return `/api/cupones?${params.toString()}`;
         }
 
         async function loadProductCategories() {
@@ -1102,6 +1168,26 @@
             `;
         }
 
+        function renderAdminCouponsPagination(metadata) {
+            if (!metadata || Number(metadata.totalPages) <= 1) {
+                return '';
+            }
+
+            return `
+                <div class="pagination-container admin-pagination">
+                    <button class="pagination-btn" onclick="loadCoupons(${metadata.currentPage - 1})" ${metadata.hasPreviousPage ? '' : 'disabled'}>
+                        <i class="fa-solid fa-chevron-left"></i> Anterior
+                    </button>
+                    <span class="pagination-info">
+                        Página ${metadata.currentPage} de ${metadata.totalPages} · Mostrando ${metadata.fromItem}-${metadata.toItem} de ${metadata.totalItems}
+                    </span>
+                    <button class="pagination-btn" onclick="loadCoupons(${metadata.currentPage + 1})" ${metadata.hasNextPage ? '' : 'disabled'}>
+                        Siguiente <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            `;
+        }
+
         function csvEscape(value) {
             const text = String(value ?? '');
             return `"${text.replace(/"/g, '""')}"`;
@@ -1123,6 +1209,20 @@
             link.click();
             link.remove();
             URL.revokeObjectURL(url);
+        }
+
+        function getCouponId(coupon) {
+            return coupon.id_cupon || coupon.id;
+        }
+
+        function getCouponStatus(coupon) {
+            if (!coupon.activo) {
+                return { label: 'Inactivo', className: 'is-paused' };
+            }
+
+            return coupon.es_valido
+                ? { label: 'Válido', className: 'is-valid' }
+                : { label: 'No válido', className: 'is-invalid' };
         }
 
         async function getAllProductsForExport() {
@@ -1147,6 +1247,20 @@
                 headers: getAuthHeaders(),
             });
             if (!response.ok) throw new Error('No se pudo exportar clientes');
+            const payload = await response.json();
+            return getItemsFromResponse(payload);
+        }
+
+        async function getAllCouponsForExport() {
+            const totalItems = Number(lastCouponsPagination?.totalItems) || lastAdminCoupons.length;
+            if (!totalItems || totalItems <= lastAdminCoupons.length) {
+                return lastAdminCoupons;
+            }
+
+            const response = await fetch(buildCouponsUrl(1, totalItems), {
+                headers: getAuthHeaders(),
+            });
+            if (!response.ok) throw new Error('No se pudo exportar cupones');
             const payload = await response.json();
             return getItemsFromResponse(payload);
         }
@@ -1204,6 +1318,37 @@
                     rows
                 );
                 showNotification('CSV de clientes generado');
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification(error.message, 'error');
+            }
+        }
+
+        async function exportCouponsCsv() {
+            try {
+                const coupons = await getAllCouponsForExport();
+                if (!coupons.length) {
+                    showNotification('No hay cupones para exportar', 'error');
+                    return;
+                }
+
+                const rows = coupons.map((coupon) => [
+                    getCouponId(coupon),
+                    coupon.codigo || '',
+                    coupon.descuento ?? '',
+                    coupon.fecha_vencimiento || '',
+                    coupon.limite_stock ?? '',
+                    coupon.usos_actuales ?? '',
+                    coupon.activo ? 'Activo' : 'Inactivo',
+                    coupon.es_valido ? 'Valido' : 'No valido',
+                ]);
+
+                downloadCsv(
+                    'cupones-admin.csv',
+                    ['ID', 'Codigo', 'Descuento', 'Fecha vencimiento', 'Limite stock', 'Usos actuales', 'Activo', 'Validez'],
+                    rows
+                );
+                showNotification('CSV de cupones generado');
             } catch (error) {
                 console.error('Error:', error);
                 showNotification(error.message, 'error');
@@ -1404,6 +1549,108 @@
                     <div class="empty-state">
                         <i class="fa-solid fa-circle-exclamation"></i>
                         <p>Error al cargar clientes: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ========== FUNCIONES PARA CUPONES ==========
+
+        async function loadCoupons(page = adminCouponsPage) {
+            const container = document.getElementById('coupons-container');
+            adminCouponsPage = Math.max(Number(page) || 1, 1);
+
+            try {
+                const response = await fetch(buildCouponsUrl(adminCouponsPage), {
+                    headers: getAuthHeaders()
+                });
+
+                if (!response.ok) throw new Error(await getErrorMessage(response, 'Error al cargar cupones'));
+
+                const payload = await response.json();
+                const coupons = getItemsFromResponse(payload);
+                const metadata = getPaginationFromResponse(payload, coupons.length);
+                lastAdminCoupons = coupons;
+                lastCouponsPagination = metadata;
+
+                if ((!coupons || coupons.length === 0) && metadata?.totalItems > 0 && adminCouponsPage > 1) {
+                    await loadCoupons(adminCouponsPage - 1);
+                    return;
+                }
+
+                if (!coupons || coupons.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa-solid fa-ticket"></i>
+                            <p>No hay cupones registrados</p>
+                            <button class="btn-hero" onclick="openCouponModal()">
+                                <i class="fa-solid fa-plus"></i> Crear primer cupón
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = `
+                    <div class="admin-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Código</th>
+                                    <th>Descuento</th>
+                                    <th>Vence</th>
+                                    <th>Uso</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                coupons.forEach((coupon) => {
+                    const couponId = getCouponId(coupon);
+                    const status = getCouponStatus(coupon);
+                    const usosActuales = Number(coupon.usos_actuales || 0);
+                    const limiteStock = Number(coupon.limite_stock || 0);
+
+                    html += `
+                        <tr>
+                            <td>${escapeHtml(couponId)}</td>
+                            <td><strong>${escapeHtml(coupon.codigo || 'Sin código')}</strong></td>
+                            <td>${escapeHtml(coupon.descuento)}%</td>
+                            <td>${escapeHtml(coupon.fecha_vencimiento || '')}</td>
+                            <td>${usosActuales}/${limiteStock}</td>
+                            <td><span class="status-chip ${status.className}">${status.label}</span></td>
+                            <td class="admin-actions">
+                                <button class="btn-edit" onclick="editCoupon(${couponId})">
+                                    <i class="fa-solid fa-pencil"></i> Editar
+                                </button>
+                                <button class="btn-delete" onclick="deleteCoupon(${couponId})">
+                                    <i class="fa-solid fa-trash"></i> Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                    ${renderAdminCouponsPagination(metadata)}
+                `;
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <p>Error al cargar cupones: ${error.message}</p>
+                        <button class="btn-hero" onclick="loadCoupons()">
+                            <i class="fa-solid fa-rotate-right"></i> Reintentar
+                        </button>
                     </div>
                 `;
             }
@@ -1726,27 +1973,199 @@
                 showNotification('Error al eliminar usuario', 'error');
             }
         }
+
+        // ========== CRUD DE CUPONES ==========
+
+        function openCouponModal(coupon = null) {
+            const modal = document.getElementById('admin-modal');
+            const modalContent = modal.querySelector('.modal-content');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+
+            const isEdit = coupon !== null;
+            const couponId = isEdit ? getCouponId(coupon) : null;
+            modalTitle.textContent = isEdit ? 'Editar Cupón' : 'Nuevo Cupón';
+
+            modalBody.innerHTML = `
+                <form id="coupon-form">
+                    <div class="form-group">
+                        <label>Código *</label>
+                        <input type="text" id="coupon-code" value="${isEdit ? escapeHtml(coupon.codigo || '') : ''}" required placeholder="Ej. BIENVENIDA10">
+                    </div>
+                    <div class="form-group">
+                        <label>Descuento (%) *</label>
+                        <input type="number" id="coupon-discount" value="${isEdit ? Number(coupon.descuento || 0) : ''}" required min="1" max="100" placeholder="Ej. 15">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de vencimiento *</label>
+                        <input type="date" id="coupon-expiration" value="${isEdit ? escapeHtml(coupon.fecha_vencimiento || '') : ''}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Límite de usos *</label>
+                        <input type="number" id="coupon-stock" value="${isEdit ? Number(coupon.limite_stock || 1) : ''}" required min="1" placeholder="Ej. 50">
+                    </div>
+                    ${isEdit ? `
+                    <div class="form-group">
+                        <label>Usos actuales</label>
+                        <input type="number" id="coupon-used" value="${Number(coupon.usos_actuales || 0)}" min="0">
+                    </div>
+                    ` : ''}
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <select id="coupon-active">
+                            <option value="true" ${!isEdit || coupon.activo ? 'selected' : ''}>Activo</option>
+                            <option value="false" ${isEdit && !coupon.activo ? 'selected' : ''}>Inactivo</option>
+                        </select>
+                    </div>
+                </form>
+            `;
+
+            const footer = document.createElement('div');
+            footer.className = 'modal-footer';
+            footer.innerHTML = `
+                <button type="button" class="btn-modal-cancel" onclick="closeAdminModal()">Cancelar</button>
+                <button type="button" class="btn-modal-save" onclick="saveCoupon(${couponId || 'null'})">Guardar</button>
+            `;
+
+            const oldFooter = modal.querySelector('.modal-footer');
+            if (oldFooter) oldFooter.remove();
+            modalContent.appendChild(footer);
+            modalBody.scrollTop = 0;
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        async function saveCoupon(couponId = null) {
+            const codigo = document.getElementById('coupon-code')?.value.trim().toUpperCase();
+            const descuento = parseInt(document.getElementById('coupon-discount')?.value, 10);
+            const fechaVencimiento = document.getElementById('coupon-expiration')?.value;
+            const limiteStock = parseInt(document.getElementById('coupon-stock')?.value, 10);
+            const usosActualesInput = document.getElementById('coupon-used');
+            const activo = document.getElementById('coupon-active')?.value === 'true';
+
+            if (!codigo || !fechaVencimiento || isNaN(descuento) || isNaN(limiteStock)) {
+                showNotification('Por favor, completá todos los campos obligatorios', 'error');
+                return;
+            }
+
+            if (descuento < 1 || descuento > 100) {
+                showNotification('El descuento debe estar entre 1 y 100', 'error');
+                return;
+            }
+
+            if (limiteStock < 1) {
+                showNotification('El límite de usos debe ser mayor a 0', 'error');
+                return;
+            }
+
+            const couponData = {
+                codigo,
+                descuento,
+                fecha_vencimiento: fechaVencimiento,
+                limite_stock: limiteStock,
+                activo
+            };
+
+            if (couponId && usosActualesInput) {
+                const usosActuales = parseInt(usosActualesInput.value, 10) || 0;
+                if (usosActuales < 0) {
+                    showNotification('Los usos actuales no pueden ser negativos', 'error');
+                    return;
+                }
+                couponData.usos_actuales = usosActuales;
+            }
+
+            try {
+                const url = couponId ? `/api/cupones/${couponId}` : '/api/cupones';
+                const method = couponId ? 'PUT' : 'POST';
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify(couponData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(await getErrorMessage(response, 'Error al guardar cupón'));
+                }
+
+                showNotification(couponId ? '✓ Cupón actualizado' : '✓ Cupón creado');
+                closeAdminModal();
+                await loadCoupons(couponId ? adminCouponsPage : 1);
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function editCoupon(id) {
+            try {
+                const response = await fetch(`/api/cupones/${id}`, {
+                    headers: getAuthHeaders()
+                });
+
+                if (!response.ok) {
+                    throw new Error(await getErrorMessage(response, 'Error al cargar cupón'));
+                }
+
+                const coupon = await response.json();
+                openCouponModal(coupon);
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteCoupon(id) {
+            if (!confirm('¿Estás seguro de que querés eliminar este cupón?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/cupones/${id}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+
+                if (!response.ok) {
+                    throw new Error(await getErrorMessage(response, 'Error al eliminar cupón'));
+                }
+
+                showNotification('✓ Cupón eliminado');
+                await loadCoupons(adminCouponsPage);
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification(`Error: ${error.message}`, 'error');
+            }
+        }
         
         // ========== FUNCIONES GENERALES ==========
         
         function switchAdminView(view) {
             const productsSec = document.getElementById('admin-products');
             const customersSec = document.getElementById('admin-customers');
+            const couponsSec = document.getElementById('admin-coupons');
             const prodBtn = document.getElementById('nav-prod');
             const custBtn = document.getElementById('nav-cust');
-            
+            const coupBtn = document.getElementById('nav-coup');
+
+            productsSec.classList.toggle('active', view === 'products');
+            customersSec.classList.toggle('active', view === 'customers');
+            couponsSec.classList.toggle('active', view === 'coupons');
+
+            prodBtn.classList.toggle('active', view === 'products');
+            custBtn.classList.toggle('active', view === 'customers');
+            coupBtn.classList.toggle('active', view === 'coupons');
+
             if (view === 'products') {
-                productsSec.classList.add('active');
-                customersSec.classList.remove('active');
-                prodBtn.classList.add('active');
-                custBtn.classList.remove('active');
                 loadProducts();
-            } else {
-                customersSec.classList.add('active');
-                productsSec.classList.remove('active');
-                custBtn.classList.add('active');
-                prodBtn.classList.remove('active');
+            } else if (view === 'customers') {
                 loadCustomers();
+            } else if (view === 'coupons') {
+                loadCoupons();
             }
         }
         
@@ -1812,19 +2231,25 @@
         window.switchAdminView = switchAdminView;
         window.openProductModal = openProductModal;
         window.openCustomerModal = openCustomerModal;
+        window.openCouponModal = openCouponModal;
         window.editProduct = editProduct;
         window.deleteProduct = deleteProduct;
         window.editCustomer = editCustomer;
         window.deleteCustomer = deleteCustomer;
+        window.editCoupon = editCoupon;
+        window.deleteCoupon = deleteCoupon;
         window.closeAdminModal = closeAdminModal;
         window.saveProduct = saveProduct;
         window.saveCustomer = saveCustomer;
+        window.saveCoupon = saveCoupon;
         window.logoutUsuario = logoutUsuario;
         window.loadProducts = loadProducts;
         window.loadCustomers = loadCustomers;
+        window.loadCoupons = loadCoupons;
         window.resetProductFilters = resetProductFilters;
         window.exportProductsCsv = exportProductsCsv;
         window.exportCustomersCsv = exportCustomersCsv;
+        window.exportCouponsCsv = exportCouponsCsv;
     </script>
 </body>
 </html>
