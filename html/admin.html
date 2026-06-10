@@ -801,6 +801,124 @@
                 padding: 4px 8px;
             }
         }
+        /* ===== AJUSTES VISUALES DEL PANEL ADMIN ===== */
+
+/* Barra lateral más angosta */
+.admin-body .dashboard-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+}
+
+/* Logo adaptado al nuevo ancho */
+.admin-body .sidebar-brand {
+    padding: 28px 10px;
+    text-align: center;
+}
+
+.admin-body .sidebar-brand .logo {
+    font-size: 1.45rem;
+    line-height: 1;
+    white-space: nowrap;
+    letter-spacing: -0.5px;
+    text-align: center;
+}
+
+/* Menú lateral con menos espacio desperdiciado */
+.admin-body .sidebar-nav ul {
+    width: 100%;
+    gap: 10px;
+    padding: 0 28px;
+}
+
+/* Botones de acciones alineados y sin cortes */
+.admin-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.btn-edit,
+.btn-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 82px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+
+/* Columna general de acciones */
+.admin-table th:last-child,
+.admin-table td:last-child {
+    width: 200px;
+}
+
+/* ===== TABLA DE CLIENTES ===== */
+
+#customers-container .admin-table th:nth-child(1),
+#customers-container .admin-table td:nth-child(1) {
+    width: 70px;
+}
+
+#customers-container .admin-table th:nth-child(2),
+#customers-container .admin-table td:nth-child(2) {
+    width: 240px;
+}
+
+#customers-container .admin-table th:nth-child(3),
+#customers-container .admin-table td:nth-child(3) {
+    width: 240px;
+}
+
+#customers-container .admin-table th:nth-child(4),
+#customers-container .admin-table td:nth-child(4) {
+    width: 150px;
+}
+
+#customers-container .admin-table th:nth-child(5),
+#customers-container .admin-table td:nth-child(5) {
+    width: 200px;
+}
+
+/* ===== TABLA DE DESCUENTOS ===== */
+
+#coupons-container .admin-table th:nth-child(1),
+#coupons-container .admin-table td:nth-child(1) {
+    width: 70px;
+}
+
+#coupons-container .admin-table th:nth-child(2),
+#coupons-container .admin-table td:nth-child(2) {
+    width: 180px;
+}
+
+#coupons-container .admin-table th:nth-child(3),
+#coupons-container .admin-table td:nth-child(3) {
+    width: 130px;
+}
+
+#coupons-container .admin-table th:nth-child(4),
+#coupons-container .admin-table td:nth-child(4) {
+    width: 160px;
+}
+
+#coupons-container .admin-table th:nth-child(5),
+#coupons-container .admin-table td:nth-child(5) {
+    width: 120px;
+}
+
+#coupons-container .admin-table th:nth-child(6),
+#coupons-container .admin-table td:nth-child(6) {
+    width: 140px;
+}
+
+#coupons-container .admin-table th:nth-child(7),
+#coupons-container .admin-table td:nth-child(7) {
+    width: 200px;
+}
     </style>
 </head>
 <body class="admin-body">
@@ -1069,7 +1187,7 @@
                 limit: String(limit)
             });
 
-            return `/api/clientes?${params.toString()}`;
+            return `/api/usuarios?${params.toString()}`;
         }
 
         function buildCouponsUrl(page, limit = ADMIN_COUPONS_LIMIT) {
@@ -1846,7 +1964,7 @@
                     <div class="form-group">
                         <label>Rol</label>
                         <select id="cust-role">
-                            <option value="user" ${isEdit && customer.role === 'user' ? 'selected' : ''}>Cliente</option>
+                            <option value="client" ${isEdit && customer.role === 'client' ? 'selected' : ''}>Cliente</option>
                             <option value="admin" ${isEdit && customer.role === 'admin' ? 'selected' : ''}>Administrador</option>
                         </select>
                     </div>
@@ -1881,9 +1999,9 @@
             }
             
             const customerData = {
-                nombre: name,
+                name: name,
                 email: email,
-                role: role || 'user'
+                role: role || 'client'
             };
             
             if (!customerId) {
@@ -1896,11 +2014,11 @@
             }
             
             try {
-                let url = '/api/clientes';
+                let url = '/api/usuarios';
                 let method = 'POST';
                 
                 if (customerId) {
-                    url = `/api/clientes/${customerId}`;
+                    url = `/api/usuarios/${customerId}`;
                     method = 'PUT';
                 }
                 
@@ -1932,7 +2050,7 @@
             const token = localStorage.getItem('token');
             
             try {
-                const response = await fetch(`/api/clientes/${id}`, {
+                const response = await fetch(`/api/usuarios/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -1956,7 +2074,7 @@
             const token = localStorage.getItem('token');
             
             try {
-                const response = await fetch(`/api/clientes/${id}`, {
+                const response = await fetch(`/api/usuarios/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${token}`

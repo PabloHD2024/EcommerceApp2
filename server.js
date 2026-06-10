@@ -15,6 +15,7 @@ const categoriasRoutes = require("./src/routes/categoriasRoutes");
 const cuponRoutes = require("./src/routes/cuponRoutes");
 const authRoutes = require("./src/routes/authRoutes");
 const clientesRoutes = require("./src/routes/clientesRoutes");
+const usuariosRoutes = require("./src/routes/usuariosRoutes");
 
 require("./src/models/User");
 
@@ -77,6 +78,7 @@ app.use("/api/categorias", categoriasRoutes);
 app.use("/api/cupones", cuponRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/clientes", clientesRoutes);
+app.use("/api/usuarios", usuariosRoutes);
 
 // Checkout endpoint
 app.post("/api/checkout", async (req, res) => {
