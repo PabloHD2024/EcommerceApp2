@@ -1069,7 +1069,7 @@
                 limit: String(limit)
             });
 
-            return `/api/clientes?${params.toString()}`;
+            return `/api/usuarios?${params.toString()}`;
         }
 
         function buildCouponsUrl(page, limit = ADMIN_COUPONS_LIMIT) {
@@ -1846,7 +1846,7 @@
                     <div class="form-group">
                         <label>Rol</label>
                         <select id="cust-role">
-                            <option value="user" ${isEdit && customer.role === 'user' ? 'selected' : ''}>Cliente</option>
+                            <option value="client" ${isEdit && customer.role === 'client' ? 'selected' : ''}>Cliente</option>
                             <option value="admin" ${isEdit && customer.role === 'admin' ? 'selected' : ''}>Administrador</option>
                         </select>
                     </div>
@@ -1881,9 +1881,9 @@
             }
             
             const customerData = {
-                nombre: name,
+                name: name,
                 email: email,
-                role: role || 'user'
+                role: role || 'client'
             };
             
             if (!customerId) {
@@ -1896,11 +1896,11 @@
             }
             
             try {
-                let url = '/api/clientes';
+                let url = '/api/usuarios';
                 let method = 'POST';
                 
                 if (customerId) {
-                    url = `/api/clientes/${customerId}`;
+                    url = `/api/usuarios/${customerId}`;
                     method = 'PUT';
                 }
                 
@@ -1932,7 +1932,7 @@
             const token = localStorage.getItem('token');
             
             try {
-                const response = await fetch(`/api/clientes/${id}`, {
+                const response = await fetch(`/api/usuarios/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -1956,7 +1956,7 @@
             const token = localStorage.getItem('token');
             
             try {
-                const response = await fetch(`/api/clientes/${id}`, {
+                const response = await fetch(`/api/usuarios/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${token}`
