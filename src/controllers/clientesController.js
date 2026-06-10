@@ -1,11 +1,22 @@
 const Cliente = require('../models/Cliente');
 const User = require('../models/User');
+const {
+  getPaginationParams,
+  buildPaginatedResponse,
+} = require('../utils/pagination');
 
 const clientesController = {
   getAll: async (req, res) => {
     try {
-      const clientes = await Cliente.findAll();
-      res.json(clientes);
+      const { page, limit, offset } = getPaginationParams(req.query, 10);
+
+      const { count, rows: clientes } = await Cliente.findAndCountAll({
+        order: [['id', 'ASC']],
+        limit,
+        offset,
+      });
+
+      res.json(buildPaginatedResponse(count, page, limit, clientes));
     } catch (error) {
       res.status(500).json({
         error: 'Error al obtener clientes',

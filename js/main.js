@@ -130,8 +130,8 @@ function normalizeProductsResponse(payload) {
   }
 
   return {
-    data: payload?.data || [],
-    metadata: payload?.metadata || {}
+    data: payload?.items || payload?.data || [],
+    metadata: payload?.pagination || payload?.metadata || {}
   };
 }
 
@@ -212,10 +212,11 @@ function renderProductsPagination(metadata) {
     return;
   }
 
-  const currentPage = Number(metadata.currentPage) || 1;
-  const fromItem = Number(metadata.fromItem) || 0;
-  const toItem = Number(metadata.toItem) || 0;
+  const currentPage = Number(metadata.page || metadata.currentPage) || 1;
+  const limit = Number(metadata.limit) || PRODUCTS_PAGE_LIMIT;
   const totalItems = Number(metadata.totalItems) || 0;
+  const fromItem = totalItems === 0 ? 0 : ((currentPage - 1) * limit) + 1;
+  const toItem = Math.min(currentPage * limit, totalItems);
 
   pagination.innerHTML = `
     <button class="pagination-btn" data-page="${currentPage - 1}" ${metadata.hasPreviousPage ? "" : "disabled"}>
@@ -235,6 +236,48 @@ function renderProductsPagination(metadata) {
       if (page > 0) loadProductsPage(page);
     });
   });
+}
+
+function createCategoryFilterButton(label, category) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = `filter-btn ${currentCategory === category ? "active" : ""}`;
+  button.dataset.category = category;
+  button.textContent = label;
+  return button;
+}
+
+function bindCategoryFilterButtons() {
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentCategory = btn.dataset.category;
+      loadProductsPage(1);
+    };
+  });
+}
+
+async function loadProductCategories() {
+  const filtersContainer = document.getElementById("category-filters");
+  if (!filtersContainer) return;
+
+  try {
+    const response = await fetch("/api/categorias");
+    if (!response.ok) throw new Error("Error al cargar categorías");
+
+    const categorias = await response.json();
+    filtersContainer.innerHTML = "";
+    filtersContainer.appendChild(createCategoryFilterButton("Todos", "all"));
+
+    categorias.forEach(categoria => {
+      filtersContainer.appendChild(createCategoryFilterButton(categoria, categoria));
+    });
+  } catch (error) {
+    console.error("Error cargando categorías:", error);
+  }
+
+  bindCategoryFilterButtons();
 }
 
 async function loadProductsPage(page = 1) {
@@ -267,17 +310,7 @@ async function loadProductsPage(page = 1) {
       renderProductsPagination(productsPagination);
       return;
     }
-    
-    // Inicializar filtros
-    document.querySelectorAll(".filter-btn").forEach(btn => {
-      btn.onclick = () => {
-        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        currentCategory = btn.dataset.category;
-        loadProductsPage(1);
-      };
-    });
-    
+    bindCategoryFilterButtons();
     displayFilteredProducts(allProducts);
     renderProductsPagination(productsPagination);
   } catch (error) {
@@ -713,7 +746,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Cargar productos según la página
   if (document.getElementById("products-list")) {
-    loadProductsPage();
+    loadProductCategories().finally(() => loadProductsPage());
   }
   
   if (document.getElementById("featured-products")) {

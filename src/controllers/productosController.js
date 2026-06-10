@@ -1,13 +1,15 @@
 const Producto = require("../models/Producto");
 const { Op } = require("sequelize");
+const {
+  getPaginationParams,
+  buildPaginatedResponse,
+} = require("../utils/pagination");
 
 const productosController = {
   getAll: async (req, res) => {
     try {
-      const { categoria } = req.query;
-      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-      const limit = Math.max(parseInt(req.query.limit, 10) || 6, 1);
-      const offset = (page - 1) * limit;
+      const { categoria, nombre } = req.query;
+      const { page, limit, offset } = getPaginationParams(req.query, 6);
       const today = new Date();
 
       const whereCondition = {
@@ -15,8 +17,14 @@ const productosController = {
         validTo: { [Op.gte]: today },
       };
 
-      if (categoria) {
-        whereCondition.categoria = categoria;
+      if (categoria && categoria.trim()) {
+        whereCondition.categoria = categoria.trim();
+      }
+
+      if (nombre && nombre.trim()) {
+        whereCondition.nombre = {
+          [Op.like]: `%${nombre.trim()}%`,
+        };
       }
 
       const { count, rows: productos } = await Producto.findAndCountAll({
@@ -41,25 +49,7 @@ const productosController = {
         validTo: producto.validTo,
       }));
 
-      const totalPages = Math.ceil(count / limit);
-
-      res.json({
-        success: true,
-        data: productosFormateados,
-        metadata: {
-          totalItems: count,
-          totalPages,
-          currentPage: page,
-          limit,
-          currentItems: productosFormateados.length,
-          fromItem: count === 0 ? 0 : offset + 1,
-          toItem: offset + productosFormateados.length,
-          hasPreviousPage: page > 1,
-          hasNextPage: page < totalPages,
-          previousPage: page > 1 ? page - 1 : null,
-          nextPage: page < totalPages ? page + 1 : null,
-        },
-      });
+      res.json(buildPaginatedResponse(count, page, limit, productosFormateados));
     } catch (error) {
       console.error("ERROR REAL EN getAll PRODUCTOS:", error);
       res.status(500).json({
