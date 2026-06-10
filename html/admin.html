@@ -222,6 +222,35 @@
             cursor: pointer;
         }
 
+        .section-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-export-csv {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 42px;
+            padding: 0 16px;
+            border: 1px solid #cfd9e3;
+            border-radius: 8px;
+            background: var(--white);
+            color: var(--primary-color);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-export-csv:hover {
+            border-color: var(--secondary-color);
+            color: var(--secondary-color);
+            box-shadow: 0 8px 18px rgba(44, 62, 80, 0.1);
+        }
+
         .admin-filters {
             display: grid;
             grid-template-columns: minmax(220px, 1.35fr) minmax(180px, 0.85fr) auto;
@@ -706,6 +735,17 @@
                 align-items: flex-start;
             }
 
+            .section-actions {
+                width: 100%;
+                justify-content: stretch;
+            }
+
+            .section-actions .btn-export-csv,
+            .section-actions .btn-hero {
+                flex: 1;
+                justify-content: center;
+            }
+
             .admin-table th,
             .admin-table td {
                 padding: 8px 10px;
@@ -775,9 +815,14 @@
             <section id="admin-products" class="admin-section active">
                 <div class="section-header">
                     <h2><i class="fa-solid fa-box-open"></i> Gestión de Productos</h2>
-                    <button class="btn-hero" style="margin: 0;" onclick="openProductModal()">
-                        <i class="fa-solid fa-plus"></i> Nuevo Producto
-                    </button>
+                    <div class="section-actions">
+                        <button class="btn-export-csv" type="button" onclick="exportProductsCsv()">
+                            <i class="fa-solid fa-file-csv"></i> Bajar Excel/CSV
+                        </button>
+                        <button class="btn-hero" style="margin: 0;" onclick="openProductModal()">
+                            <i class="fa-solid fa-plus"></i> Nuevo Producto
+                        </button>
+                    </div>
                 </div>
 
                 <form class="admin-filters" id="product-filters">
@@ -822,9 +867,14 @@
             <section id="admin-customers" class="admin-section">
                 <div class="section-header">
                     <h2><i class="fa-solid fa-users"></i> Gestión de Clientes</h2>
-                    <button class="btn-hero" style="margin: 0; background: var(--accent-color);" onclick="openCustomerModal()">
-                        <i class="fa-solid fa-user-plus"></i> Nuevo Cliente
-                    </button>
+                    <div class="section-actions">
+                        <button class="btn-export-csv" type="button" onclick="exportCustomersCsv()">
+                            <i class="fa-solid fa-file-csv"></i> Bajar Excel/CSV
+                        </button>
+                        <button class="btn-hero" style="margin: 0; background: var(--accent-color);" onclick="openCustomerModal()">
+                            <i class="fa-solid fa-user-plus"></i> Nuevo Cliente
+                        </button>
+                    </div>
                 </div>
 
                 <div class="admin-card" id="customers-container">
@@ -885,16 +935,42 @@
             }
         }
 
-        function getProductsFromResponse(payload) {
-            return Array.isArray(payload) ? payload : payload.data || [];
+        function getItemsFromResponse(payload) {
+            return Array.isArray(payload) ? payload : payload.items || payload.data || [];
         }
 
-        function getPaginationFromResponse(payload) {
-            return Array.isArray(payload) ? null : payload.metadata || null;
+        function getPaginationFromResponse(payload, itemsLength = 0) {
+            if (Array.isArray(payload)) return null;
+
+            const pagination = payload.pagination || payload.metadata || null;
+            if (!pagination) return null;
+
+            const page = Number(pagination.page || pagination.currentPage) || 1;
+            const limit = Number(pagination.limit) || itemsLength || 1;
+            const totalItems = Number(pagination.totalItems) || itemsLength;
+
+            return {
+                ...pagination,
+                page,
+                currentPage: page,
+                limit,
+                totalItems,
+                totalPages: Number(pagination.totalPages) || Math.ceil(totalItems / limit),
+                fromItem: totalItems === 0 ? 0 : ((page - 1) * limit) + 1,
+                toItem: Math.min(page * limit, totalItems),
+                hasPreviousPage: Boolean(pagination.hasPreviousPage),
+                hasNextPage: Boolean(pagination.hasNextPage),
+            };
         }
 
         const ADMIN_PRODUCTS_LIMIT = 6;
+        const ADMIN_CUSTOMERS_LIMIT = 8;
         let adminProductsPage = 1;
+        let adminCustomersPage = 1;
+        let lastAdminProducts = [];
+        let lastProductsPagination = null;
+        let lastAdminCustomers = [];
+        let lastCustomersPagination = null;
         const adminProductFilters = {
             nombre: '',
             categoria: ''
@@ -913,10 +989,10 @@
             return Boolean(adminProductFilters.nombre || adminProductFilters.categoria);
         }
 
-        function buildProductsUrl(page) {
+        function buildProductsUrl(page, limit = ADMIN_PRODUCTS_LIMIT) {
             const params = new URLSearchParams({
                 page: String(page),
-                limit: String(ADMIN_PRODUCTS_LIMIT)
+                limit: String(limit)
             });
 
             if (adminProductFilters.nombre) {
@@ -928,6 +1004,15 @@
             }
 
             return `/api/productos?${params.toString()}`;
+        }
+
+        function buildCustomersUrl(page, limit = ADMIN_CUSTOMERS_LIMIT) {
+            const params = new URLSearchParams({
+                page: String(page),
+                limit: String(limit)
+            });
+
+            return `/api/clientes?${params.toString()}`;
         }
 
         async function loadProductCategories() {
@@ -996,6 +1081,134 @@
                 </div>
             `;
         }
+
+        function renderAdminCustomersPagination(metadata) {
+            if (!metadata || Number(metadata.totalPages) <= 1) {
+                return '';
+            }
+
+            return `
+                <div class="pagination-container admin-pagination">
+                    <button class="pagination-btn" onclick="loadCustomers(${metadata.currentPage - 1})" ${metadata.hasPreviousPage ? '' : 'disabled'}>
+                        <i class="fa-solid fa-chevron-left"></i> Anterior
+                    </button>
+                    <span class="pagination-info">
+                        Página ${metadata.currentPage} de ${metadata.totalPages} · Mostrando ${metadata.fromItem}-${metadata.toItem} de ${metadata.totalItems}
+                    </span>
+                    <button class="pagination-btn" onclick="loadCustomers(${metadata.currentPage + 1})" ${metadata.hasNextPage ? '' : 'disabled'}>
+                        Siguiente <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        function csvEscape(value) {
+            const text = String(value ?? '');
+            return `"${text.replace(/"/g, '""')}"`;
+        }
+
+        function downloadCsv(filename, headers, rows) {
+            const separator = ';';
+            const content = [
+                headers.map(csvEscape).join(separator),
+                ...rows.map((row) => row.map(csvEscape).join(separator)),
+            ].join('\r\n');
+            const blob = new Blob([`\ufeff${content}`], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        async function getAllProductsForExport() {
+            const totalItems = Number(lastProductsPagination?.totalItems) || lastAdminProducts.length;
+            if (!totalItems || totalItems <= lastAdminProducts.length) {
+                return lastAdminProducts;
+            }
+
+            const response = await fetch(buildProductsUrl(1, totalItems));
+            if (!response.ok) throw new Error('No se pudo exportar productos');
+            const payload = await response.json();
+            return getItemsFromResponse(payload);
+        }
+
+        async function getAllCustomersForExport() {
+            const totalItems = Number(lastCustomersPagination?.totalItems) || lastAdminCustomers.length;
+            if (!totalItems || totalItems <= lastAdminCustomers.length) {
+                return lastAdminCustomers;
+            }
+
+            const response = await fetch(buildCustomersUrl(1, totalItems), {
+                headers: getAuthHeaders(),
+            });
+            if (!response.ok) throw new Error('No se pudo exportar clientes');
+            const payload = await response.json();
+            return getItemsFromResponse(payload);
+        }
+
+        async function exportProductsCsv() {
+            try {
+                const products = await getAllProductsForExport();
+                if (!products.length) {
+                    showNotification('No hay productos para exportar', 'error');
+                    return;
+                }
+
+                const rows = products.map((product) => [
+                    product.id,
+                    product.name || product.nombre || '',
+                    product.price ?? product.precio ?? '',
+                    product.stock ?? '',
+                    product.categoria || product.category || '',
+                    product.image || product.imagen || '',
+                ]);
+
+                downloadCsv(
+                    'productos-admin.csv',
+                    ['ID', 'Nombre', 'Precio', 'Stock', 'Categoria', 'Imagen'],
+                    rows
+                );
+                showNotification('CSV de productos generado');
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification(error.message, 'error');
+            }
+        }
+
+        async function exportCustomersCsv() {
+            try {
+                const customers = await getAllCustomersForExport();
+                if (!customers.length) {
+                    showNotification('No hay clientes para exportar', 'error');
+                    return;
+                }
+
+                const rows = customers.map((customer) => [
+                    customer.id,
+                    customer.name || customer.nombre || '',
+                    customer.apellido || '',
+                    customer.email || '',
+                    customer.telefono || '',
+                    customer.direccion || '',
+                    customer.role || 'user',
+                ]);
+
+                downloadCsv(
+                    'clientes-admin.csv',
+                    ['ID', 'Nombre', 'Apellido', 'Email', 'Telefono', 'Direccion', 'Rol'],
+                    rows
+                );
+                showNotification('CSV de clientes generado');
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification(error.message, 'error');
+            }
+        }
         
         async function loadProducts(page = adminProductsPage) {
             const container = document.getElementById('products-container');
@@ -1006,8 +1219,10 @@
                 if (!response.ok) throw new Error('Error al cargar productos');
                 
                 const payload = await response.json();
-                const products = getProductsFromResponse(payload);
-                const metadata = getPaginationFromResponse(payload);
+                const products = getItemsFromResponse(payload);
+                const metadata = getPaginationFromResponse(payload, products.length);
+                lastAdminProducts = products;
+                lastProductsPagination = metadata;
                 
                 if ((!products || products.length === 0) && metadata?.totalItems > 0 && adminProductsPage > 1) {
                     await loadProducts(adminProductsPage - 1);
@@ -1102,12 +1317,13 @@
         
         // ========== FUNCIONES PARA CLIENTES ==========
         
-        async function loadCustomers() {
+        async function loadCustomers(page = adminCustomersPage) {
             const container = document.getElementById('customers-container');
             const token = localStorage.getItem('token');
+            adminCustomersPage = Math.max(Number(page) || 1, 1);
             
             try {
-                const response = await fetch('/api/clientes', {
+                const response = await fetch(buildCustomersUrl(adminCustomersPage), {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -1115,7 +1331,16 @@
                 
                 if (!response.ok) throw new Error('Error al cargar clientes');
                 
-                const customers = await response.json();
+                const payload = await response.json();
+                const customers = getItemsFromResponse(payload);
+                const metadata = getPaginationFromResponse(payload, customers.length);
+                lastAdminCustomers = customers;
+                lastCustomersPagination = metadata;
+
+                if ((!customers || customers.length === 0) && metadata?.totalItems > 0 && adminCustomersPage > 1) {
+                    await loadCustomers(adminCustomersPage - 1);
+                    return;
+                }
                 
                 if (!customers || customers.length === 0) {
                     container.innerHTML = `
@@ -1144,13 +1369,13 @@
                 
                 customers.forEach(customer => {
                     const nombre = customer.name || customer.nombre || 'Sin nombre';
-                    const rol = customer.role || 'user';
+                    const rol = customer.role === 'admin' ? 'admin' : 'user';
                     
                     html += `
                         <tr>
-                            <td>${customer.id}</td>
-                            <td><strong>${nombre}</strong></td>
-                            <td>${customer.email}</td>
+                            <td>${escapeHtml(customer.id)}</td>
+                            <td><strong>${escapeHtml(nombre)}</strong></td>
+                            <td>${escapeHtml(customer.email || '')}</td>
                             <td><span class="role-badge role-${rol}">${rol === 'admin' ? 'Administrador' : 'Cliente'}</span></td>
                             <td class="admin-actions">
                                 <button class="btn-edit" onclick="editCustomer(${customer.id})">
@@ -1168,6 +1393,7 @@
                             </tbody>
                         </table>
                     </div>
+                    ${renderAdminCustomersPagination(metadata)}
                 `;
                 
                 container.innerHTML = html;
@@ -1597,6 +1823,8 @@
         window.loadProducts = loadProducts;
         window.loadCustomers = loadCustomers;
         window.resetProductFilters = resetProductFilters;
+        window.exportProductsCsv = exportProductsCsv;
+        window.exportCustomersCsv = exportCustomersCsv;
     </script>
 </body>
 </html>

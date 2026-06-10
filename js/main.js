@@ -130,8 +130,8 @@ function normalizeProductsResponse(payload) {
   }
 
   return {
-    data: payload?.data || [],
-    metadata: payload?.metadata || {}
+    data: payload?.items || payload?.data || [],
+    metadata: payload?.pagination || payload?.metadata || {}
   };
 }
 
@@ -212,10 +212,11 @@ function renderProductsPagination(metadata) {
     return;
   }
 
-  const currentPage = Number(metadata.currentPage) || 1;
-  const fromItem = Number(metadata.fromItem) || 0;
-  const toItem = Number(metadata.toItem) || 0;
+  const currentPage = Number(metadata.page || metadata.currentPage) || 1;
+  const limit = Number(metadata.limit) || PRODUCTS_PAGE_LIMIT;
   const totalItems = Number(metadata.totalItems) || 0;
+  const fromItem = totalItems === 0 ? 0 : ((currentPage - 1) * limit) + 1;
+  const toItem = Math.min(currentPage * limit, totalItems);
 
   pagination.innerHTML = `
     <button class="pagination-btn" data-page="${currentPage - 1}" ${metadata.hasPreviousPage ? "" : "disabled"}>

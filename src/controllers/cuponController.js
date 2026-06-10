@@ -1,10 +1,20 @@
 const Cupon = require('../models/Cupon');
+const {
+  getPaginationParams,
+  buildPaginatedResponse,
+} = require('../utils/pagination');
 
 const cuponController = {
   // GET /api/cupones
   getAll: async (req, res) => {
     try {
-      const cupones = await Cupon.findAll();
+      const { page, limit, offset } = getPaginationParams(req.query, 10);
+
+      const { count, rows: cupones } = await Cupon.findAndCountAll({
+        order: [['id', 'ASC']],
+        limit,
+        offset,
+      });
 
       const respuesta = cupones.map((cupon) => ({
         ...cupon.toJSON(),
@@ -12,7 +22,7 @@ const cuponController = {
         es_valido: cupon.esValido()
       }));
 
-      res.json(respuesta);
+      res.json(buildPaginatedResponse(count, page, limit, respuesta));
     } catch (error) {
       res.status(500).json({
         mensaje: 'Error al obtener cupones',
