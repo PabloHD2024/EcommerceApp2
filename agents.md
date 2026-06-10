@@ -10,14 +10,14 @@ Este documento recoge las normas y buenas prácticas para contribuir y mantener 
 ## Flujo de trabajo (Git)
 
 - Rama principal: `main` o `master` (protegida para releases).
-- Trabajar en ramas de feature: `feature/nombre-descriptivo`.
+- Trabajar en ramas descriptivas. En este equipo se recomienda usar el prefijo personal, por ejemplo: `IgnacioVidal-admin-usuarios`.
 - Commits claros y en inglés/español consistente: `tipo: descripción corta` (ej. `feat: agregar endpoint de cupones`).
 - Pull requests con descripción, referencias a issues y capturas si aplica.
 
 ## Estilo de código
 
 - JavaScript: seguir convenciones modernas (ES6+).
-- Usar `prettier`/`eslint` si están configurados; mantener formato consistente.
+- Usar `prettier`/`eslint` solo si están configurados y acordados por el equipo. Evitar reformatear archivos completos por cambios pequeños.
 - Evitar `console.log` en producción; usar logs estructurados si es necesario.
 
 ## Estructura y responsabilidades
@@ -34,22 +34,33 @@ Este documento recoge las normas y buenas prácticas para contribuir y mantener 
 
 - No almacenar contraseñas en texto plano; usar `bcryptjs`.
 - Proteger rutas sensibles con JWT y autorización por rol.
+- No devolver hashes de contraseñas ni datos sensibles en las respuestas de la API.
+- Validar los roles permitidos (`admin` y `client`) en el backend.
+- Evitar que un administrador elimine accidentalmente su propia cuenta activa.
 
 ## Documentación
 
-- Actualizar `README.md` cuando se añadan endpoints o cambios importantes.
+- Actualizar `README.md` cuando se añadan endpoints, controladores, rutas o cambios importantes en el panel administrativo.
 - Documentar decisiones técnicas relevantes en el repositorio o en issues.
 
 ## Pruebas y seeds
 
-- Ejecutar seeds (`seed_DB.js`) para poblar la base local al probar cambios.
+- Ejecutar seeds (`seed_DB.js`, `seed_Users_DB.js` y `seed_Cupones_DB.js`, según corresponda) para poblar la base local al probar cambios.
 - Añadir pruebas automatizadas cuando sea posible.
 
 ## Revisión y despliegue
 
 - Revisar PRs antes de merge; asignar al menos un revisor.
 - Describir pasos de despliegue y migraciones cuando sean necesarias.
+- Antes de hacer commit, ejecutar `git diff --stat` y revisar que no existan reformateos masivos involuntarios.
+- Verificar que el árbol de trabajo quede limpio después del push.
 
----
+## Checklist mínimo para cambios administrativos
 
-Si quieres que agregue más secciones (convenciones de commits, CI, checklist de PR, etc.), dímelo y lo incluyo.
+- Probar acceso con usuario `admin`.
+- Confirmar que un usuario `client` no pueda acceder a rutas administrativas.
+- Probar crear, listar, editar y eliminar usuarios.
+- Confirmar que la contraseña se guarde hasheada.
+- Confirmar que la API no devuelva `password` ni `carrito`.
+- Probar paginación y exportación CSV.
+- Revisar que los botones y tablas no se corten en la interfaz.

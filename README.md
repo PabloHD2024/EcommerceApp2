@@ -72,6 +72,7 @@ Controladores actuales:
 - `productosController.js`
 - `categoriasController.js`
 - `clientesController.js`
+- `usuariosController.js`
 - `cuponController.js`
 - `pedidoController.js`
 - `detallePedidoController.js`
@@ -91,6 +92,7 @@ Rutas actuales:
 - `productosRoutes.js`
 - `categoriasRoutes.js`
 - `clientesRoutes.js`
+- `usuariosRoutes.js`
 - `cuponRoutes.js`
 - `pedidoRoutes.js`
 - `detallePedidoRoutes.js`
@@ -150,6 +152,7 @@ EcommerceApp2/
 │   │   ├── authController.js
 │   │   ├── categoriasController.js
 │   │   ├── clientesController.js
+│   │   ├── usuariosController.js
 │   │   ├── cuponController.js
 │   │   ├── detallePedidoController.js
 │   │   ├── pedidoController.js
@@ -172,6 +175,7 @@ EcommerceApp2/
 │       ├── authRoutes.js
 │       ├── categoriasRoutes.js
 │       ├── clientesRoutes.js
+│       ├── usuariosRoutes.js
 │       ├── cuponRoutes.js
 │       ├── detallePedidoRoutes.js
 │       ├── pedidoRoutes.js
@@ -320,7 +324,7 @@ Las contraseñas no se guardan en texto plano. Se procesan con `bcryptjs` antes 
 
 ## Endpoints disponibles
 
-## Autenticación
+### Endpoint de login
 
 ```http
 POST /api/auth/login
@@ -424,6 +428,46 @@ Ejemplo de respuesta:
 
 ---
 
+### Usuarios administrados desde el panel
+
+Las rutas de usuarios permiten que un administrador consulte y gestione las cuentas registradas en la tabla `Users`.
+
+```http
+GET /api/usuarios
+GET /api/usuarios/:id
+POST /api/usuarios
+PUT /api/usuarios/:id
+DELETE /api/usuarios/:id
+```
+
+Todas estas rutas requieren:
+
+```http
+Authorization: Bearer TOKEN_ADMIN
+```
+
+El alta de usuarios admite los campos:
+
+```json
+{
+  "name": "María Pérez",
+  "email": "maria@example.com",
+  "password": "123456",
+  "role": "client"
+}
+```
+
+Roles válidos:
+
+- `admin`
+- `client`
+
+Las contraseñas se hashean automáticamente con `bcryptjs` antes de almacenarse. La API no devuelve el hash de la contraseña ni el carrito al listar usuarios.
+
+El administrador no puede eliminar su propia cuenta mientras mantiene la sesión iniciada.
+
+---
+
 ### Checkout
 
 ```http
@@ -442,6 +486,29 @@ GET /api/cupones/aplicar/:codigo?monto=10000
 ```
 
 Estos endpoints permiten validar un cupón y calcular el descuento sobre un monto determinado.
+
+---
+
+## Panel administrativo
+
+El panel se encuentra en:
+
+```text
+http://localhost:3000/html/admin.html
+```
+
+Solo puede acceder un usuario autenticado con rol `admin`.
+
+Funciones disponibles:
+
+- Listado, creación, edición y eliminación de productos.
+- Listado, creación, edición y eliminación de usuarios.
+- Gestión de cupones y descuentos.
+- Paginación de resultados.
+- Exportación de datos a CSV.
+- Validación del token y del rol antes de ejecutar operaciones protegidas.
+
+Los usuarios creados desde el panel se almacenan en la tabla `Users` del archivo SQLite configurado mediante `DB_STORAGE`.
 
 ---
 
@@ -644,6 +711,12 @@ Actualmente el proyecto cuenta con:
 - Rutas de creación, modificación y eliminación de productos protegidas.
 - Rutas de lectura de productos públicas.
 - Interfaz preparada para diferenciar usuario invitado, cliente y administrador.
+- Panel administrativo con secciones de productos, clientes/usuarios y descuentos.
+- CRUD administrativo completo de usuarios.
+- Paginación en listados administrativos.
+- Exportación de productos, usuarios y cupones en formato CSV.
+- Rutas administrativas de usuarios protegidas con JWT y rol `admin`.
+- Validación para impedir que un administrador elimine su propia cuenta mientras está conectado.
 
 ---
 
@@ -651,18 +724,16 @@ Actualmente el proyecto cuenta con:
 
 Posibles mejoras futuras:
 
-- Proteger rutas sensibles de categorías y cupones.
-- Definir permisos específicos para clientes, pedidos, tickets y checkout.
-- Completar la integración de todas las rutas MVC en `server.js`.
-- Unificar completamente todas las entidades bajo Sequelize.
+- Proteger todas las rutas sensibles de categorías y cupones.
+- Definir permisos específicos para pedidos, tickets y checkout.
+- Unificar completamente las entidades de cliente comercial y usuario autenticado.
 - Agregar relaciones entre modelos.
-- Relacionar pedidos con clientes.
-- Relacionar detalle de pedido con productos y pedidos.
+- Relacionar pedidos con usuarios o clientes.
+- Relacionar detalles de pedido con productos y pedidos.
 - Implementar validaciones más completas.
 - Agregar manejo de errores centralizado.
-- Mejorar el frontend para consumir todos los endpoints de la API.
-- Mejorar la interfaz según usuario logueado y rol.
-- Agregar pruebas automatizadas.
+- Mejorar los mensajes visuales de éxito y error del panel.
+- Agregar pruebas automatizadas para autenticación, autorización y CRUD administrativo.
 
 ---
 
