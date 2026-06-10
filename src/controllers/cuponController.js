@@ -220,11 +220,11 @@ const cuponController = {
   // POST /api/cupones
   create: async (req, res) => {
     try {
-      const { codigo, descuento, fecha_vencimiento, limite_stock } = req.body;
+      const { codigo, descuento, fecha_vencimiento, limite_stock, activo = true } = req.body;
 
-      if (!descuento || !fecha_vencimiento || !limite_stock) {
+      if (!codigo || !descuento || !fecha_vencimiento || !limite_stock) {
         return res.status(400).json({
-          mensaje: 'Los campos descuento, fecha_vencimiento y limite_stock son obligatorios'
+          mensaje: 'Los campos codigo, descuento, fecha_vencimiento y limite_stock son obligatorios'
         });
       }
 
@@ -234,7 +234,7 @@ const cuponController = {
         fecha_vencimiento,
         limite_stock,
         usos_actuales: 0,
-        activo: true
+        activo: activo === true || activo === 'true'
       });
 
       res.status(201).json({
