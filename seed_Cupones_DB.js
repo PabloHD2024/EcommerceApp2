@@ -28,6 +28,30 @@ const cuponesIniciales = [
     usos_actuales: 0,
     activo: true,
   },
+  {
+    codigo: "PROMOMUNDIAL",
+    descuento: 20,
+    fecha_vencimiento: "2026-07-19",
+    limite_stock: 30,
+    usos_actuales: 0,
+    activo: true,
+  },
+  {
+    codigo: "VAMOSARGENTINA",
+    descuento: 25,
+    fecha_vencimiento: "2026-07-31",
+    limite_stock: 25,
+    usos_actuales: 0,
+    activo: true,
+  },
+  {
+    codigo: "FINALMUNDIAL",
+    descuento: 30,
+    fecha_vencimiento: "2026-07-19",
+    limite_stock: 15,
+    usos_actuales: 0,
+    activo: true,
+  },
 ];
 
 async function seedDatabaseCupones() {
