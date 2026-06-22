@@ -11,6 +11,7 @@
     --btn-filter-color: #007bff;
     --success-color: #41d17d;
     --danger-color: #e74c3c;
+    --sold-out-gradient: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
     --light-color: #ecf0f1;
     --dark-color: #2c3e50;
     --dark-grey: #333;
@@ -234,7 +235,7 @@ main {
     margin-top: 0.5rem;
 }
 
-.btn-add:hover {
+.btn-add:hover:not(:disabled):not(.disabled) {
     transform: scale(1.05);
     box-shadow: var(--shadow);
 }
@@ -522,7 +523,7 @@ input, textarea {
     margin-top: auto;
 }
 
-.product-list .btn-add:hover {
+.product-list .btn-add:hover:not(:disabled):not(.disabled) {
     transform: scale(1.05);
     box-shadow: var(--shadow);
 }
@@ -880,6 +881,16 @@ footer p span {
 .product-card .stock-badge.con-stock {
     color: var(--success-color) !important;
     background-color: var(--light-color);
+}
+
+.btn-add:disabled,
+.btn-add.disabled,
+.product-list .btn-add:disabled,
+.product-list .btn-add.disabled {
+    background: var(--sold-out-gradient);
+    cursor: not-allowed;
+    opacity: 0.9;
+    box-shadow: none;
 }
 
 /* ========== VISTA DE AUTENTICACIÓN (LOGIN / REGISTRO) ========== */
@@ -1284,9 +1295,10 @@ footer p span {
     }
 
     .btn-add.disabled, .btn-add:disabled {
-        background: #9ca3af;
+        background: var(--sold-out-gradient);
         cursor: not-allowed;
-        opacity: 0.7;
+        opacity: 0.9;
+        box-shadow: none;
     }
 
     .dashboard-layout {
