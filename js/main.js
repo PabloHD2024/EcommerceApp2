@@ -4,6 +4,7 @@ let currentCategory = 'all';
 let currentProductsPage = 1;
 let productsPagination = null;
 const PRODUCTS_PAGE_LIMIT = 9;
+let descuentoActivo = 0;
 
 // ========== FUNCIONES DE UTILIDAD ==========
 function showNotification(message, tipo = 'success') {
@@ -443,24 +444,42 @@ function emptyCart() {
 }
 
 async function checkout() {
+  // NUEVO: Verificar si el usuario está logueado
+  const token = localStorage.getItem('token');
+  if (!token) {
+    showNotification('Debes iniciar sesión para finalizar la compra', 'error');
+    alert('Por favor, inicia sesión para continuar con tu pago.');
+    window.location.href = './login.html'; // Redirige a la pantalla de login
+    return; // Frena la ejecución de la compra
+  }
+
   const cart = getCart();
   if (cart.length === 0) {
     showNotification('Carrito vacío', 'error');
     return;
   }
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  // Calcular total contemplando el descuento que hicimos en el punto anterior
+  let total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  if (descuentoActivo > 0) {
+    total = total * (1 - descuentoActivo / 100);
+  }
 
   try {
+    // NUEVO: Enviamos el token en los headers para que el Backend también lo valide de forma segura
     const response = await fetch('/api/checkout', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
       body: JSON.stringify({ carrito: cart, total }),
     });
 
     if (!response.ok) throw new Error('Error en checkout');
 
     alert(`¡Compra realizada! Total: $${total.toLocaleString('es-AR')}`);
+    descuentoActivo = 0; // Reseteamos el cupón
     saveCart([]);
     renderCart();
     window.location.href = '/index.html';
