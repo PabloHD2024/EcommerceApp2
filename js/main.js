@@ -1,10 +1,16 @@
 // ========== VARIABLES GLOBALES ==========
 let allProducts = [];
+let accumulatedProducts = [];
 let currentCategory = 'all';
 let currentProductsPage = 1;
 let productsPagination = null;
+<<<<<<< HEAD
 const PRODUCTS_PAGE_LIMIT = 9;
 let descuentoActivo = 0;
+=======
+let isLoadingProducts = false;
+const PRODUCTS_PAGE_LIMIT = 10;
+>>>>>>> afbaf30bcc9b91e5d5df402043cb328b6c1e73d0
 
 // ========== FUNCIONES DE UTILIDAD ==========
 function showNotification(message, tipo = 'success') {
@@ -211,8 +217,8 @@ function renderProductsPagination(metadata) {
     productsList.insertAdjacentElement('afterend', pagination);
   }
 
-  const totalPages = Number(metadata?.totalPages) || 0;
-  if (totalPages <= 1) {
+  // Si no hay siguiente página, no mostrar botón
+  if (!metadata || !metadata.hasNextPage) {
     pagination.innerHTML = '';
     return;
   }
@@ -224,18 +230,15 @@ function renderProductsPagination(metadata) {
   const toItem = Math.min(currentPage * limit, totalItems);
 
   pagination.innerHTML = `
-    <button class="pagination-btn" data-page="${currentPage - 1}" ${metadata.hasPreviousPage ? '' : 'disabled'}>
-      <i class="fa-solid fa-chevron-left"></i> Anterior
+    <button class="pagination-btn btn-load-more" data-page="${currentPage + 1}">
+      <i class="fa-solid fa-arrow-down"></i> Cargar más
     </button>
     <span class="pagination-info">
-      Página ${currentPage} de ${totalPages} · Mostrando ${fromItem}-${toItem} de ${totalItems}
+      Mostrando ${fromItem}-${toItem} de ${totalItems}
     </span>
-    <button class="pagination-btn" data-page="${currentPage + 1}" ${metadata.hasNextPage ? '' : 'disabled'}>
-      Siguiente <i class="fa-solid fa-chevron-right"></i>
-    </button>
   `;
 
-  pagination.querySelectorAll('.pagination-btn').forEach((btn) => {
+  pagination.querySelectorAll('.btn-load-more').forEach((btn) => {
     btn.addEventListener('click', () => {
       const page = Number(btn.dataset.page);
       if (page > 0) loadProductsPage(page);
@@ -293,8 +296,18 @@ async function loadProductsPage(page = 1) {
   const productsList = document.getElementById('products-list');
   if (!productsList) return;
 
+  // Prevenir cargas simultáneas
+  if (isLoadingProducts) return;
+  isLoadingProducts = true;
+
   try {
     currentProductsPage = Math.max(Number(page) || 1, 1);
+    
+    // Si es la primera página, resetear datos acumulados
+    if (currentProductsPage === 1) {
+      accumulatedProducts = [];
+    }
+    
     const params = new URLSearchParams({
       page: currentProductsPage,
       limit: PRODUCTS_PAGE_LIMIT,
@@ -304,7 +317,11 @@ async function loadProductsPage(page = 1) {
       params.set('categoria', currentCategory);
     }
 
-    productsList.innerHTML = '<p>Cargando productos...</p>';
+    // Solo mostrar "Cargando" en la primera página
+    if (currentProductsPage === 1) {
+      productsList.innerHTML = '<p>Cargando productos...</p>';
+    }
+    
     const response = await fetch(`/api/productos?${params.toString()}`);
 
     if (!response.ok) throw new Error('Error al cargar productos');
@@ -315,17 +332,28 @@ async function loadProductsPage(page = 1) {
     productsPagination = paginated.metadata;
 
     if (allProducts.length === 0) {
-      productsList.innerHTML = '<p>No hay productos disponibles</p>';
+      if (currentProductsPage === 1) {
+        productsList.innerHTML = '<p>No hay productos disponibles</p>';
+      }
       renderProductsPagination(productsPagination);
+      isLoadingProducts = false;
       return;
     }
+    
+    // Acumular productos
+    accumulatedProducts = accumulatedProducts.concat(allProducts);
+    
     bindCategoryFilterButtons();
-    displayFilteredProducts(allProducts);
+    displayFilteredProducts(accumulatedProducts);
     renderProductsPagination(productsPagination);
   } catch (error) {
     console.error('Error:', error);
-    productsList.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    if (currentProductsPage === 1) {
+      productsList.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    }
     renderProductsPagination(null);
+  } finally {
+    isLoadingProducts = false;
   }
 }
 
@@ -443,6 +471,56 @@ function emptyCart() {
   }
 }
 
+async function applyCoupon() {
+  const couponInput = document.getElementById('coupon-code');
+  const couponMessage = document.getElementById('coupon-message');
+  
+  if (!couponInput || !couponMessage) return;
+
+  const code = couponInput.value.trim().toUpperCase();
+  if (!code) {
+    couponMessage.textContent = 'Por favor ingresa un código de cupón';
+    couponMessage.className = 'coupon-message error';
+    return;
+  }
+
+  const cart = getCart();
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  if (total === 0) {
+    couponMessage.textContent = 'Tu carrito está vacío';
+    couponMessage.className = 'coupon-message error';
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/cupones/aplicar/${code}?monto=${total}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      couponMessage.textContent = data.mensaje || 'Cupón inválido';
+      couponMessage.className = 'coupon-message error';
+      return;
+    }
+
+    const descuento = data.ahorro || 0;
+    const montoFinal = data.monto_final || total;
+
+    couponMessage.textContent = `✓ Cupón aplicado: ${data.codigo} | Descuento: -$${descuento.toLocaleString('es-AR')} | Nuevo total: $${montoFinal.toLocaleString('es-AR')}`;
+    couponMessage.className = 'coupon-message success';
+
+    // Actualizar el total mostrado
+    document.getElementById('cart-total').textContent = `$${montoFinal.toLocaleString('es-AR')}`;
+
+    // Guardar el cupón aplicado en sessionStorage para el checkout
+    sessionStorage.setItem('cuponAplicado', code);
+    sessionStorage.setItem('montoConDescuento', montoFinal);
+  } catch (error) {
+    couponMessage.textContent = 'Error al validar cupón: ' + error.message;
+    couponMessage.className = 'coupon-message error';
+  }
+}
+
 async function checkout() {
   // NUEVO: Verificar si el usuario está logueado
   const token = localStorage.getItem('token');
@@ -487,7 +565,6 @@ async function checkout() {
     showNotification('Error al procesar compra', 'error');
   }
 }
-
 // ========== LOGIN Y REGISTRO ==========
 function switchAuth(view) {
   const loginTab = document.getElementById('tab-login');
@@ -845,6 +922,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const btnCheckout = document.getElementById('btn-checkout');
   if (btnCheckout) btnCheckout.addEventListener('click', checkout);
+
+  const btnApplyCoupon = document.getElementById('btn-apply-coupon');
+  if (btnApplyCoupon) btnApplyCoupon.addEventListener('click', applyCoupon);
 
   // Actualizar navbar según login
   const token = localStorage.getItem('token');

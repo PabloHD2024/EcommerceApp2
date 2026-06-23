@@ -1151,6 +1151,15 @@
         let lastCustomersPagination = null;
         let lastAdminCoupons = [];
         let lastCouponsPagination = null;
+        
+        // Variables para acumular datos (load more)
+        let allProductsData = [];
+        let allCustomersData = [];
+        let allCouponsData = [];
+        let isLoadingProducts = false;
+        let isLoadingCustomers = false;
+        let isLoadingCoupons = false;
+        
         const adminProductFilters = {
             nombre: '',
             categoria: ''
@@ -1252,61 +1261,52 @@
         }
         
         function renderAdminProductsPagination(metadata) {
-            if (!metadata || Number(metadata.totalPages) <= 1) {
+            if (!metadata || !metadata.hasNextPage) {
                 return '';
             }
 
             return `
                 <div class="pagination-container admin-pagination">
-                    <button class="pagination-btn" onclick="loadProducts(${metadata.currentPage - 1})" ${metadata.hasPreviousPage ? '' : 'disabled'}>
-                        <i class="fa-solid fa-chevron-left"></i> Anterior
+                    <button class="btn-hero" style="width: 100%; margin-top: 1rem;" onclick="loadProducts(${metadata.currentPage + 1})">
+                        <i class="fa-solid fa-arrow-down"></i> Cargar más productos
                     </button>
-                    <span class="pagination-info">
-                        Página ${metadata.currentPage} de ${metadata.totalPages} · Mostrando ${metadata.fromItem}-${metadata.toItem} de ${metadata.totalItems}
+                    <span class="pagination-info" style="text-align: center; display: block; margin-top: 0.5rem;">
+                        Mostrando ${metadata.fromItem}-${metadata.toItem} de ${metadata.totalItems}
                     </span>
-                    <button class="pagination-btn" onclick="loadProducts(${metadata.currentPage + 1})" ${metadata.hasNextPage ? '' : 'disabled'}>
-                        Siguiente <i class="fa-solid fa-chevron-right"></i>
-                    </button>
                 </div>
             `;
         }
 
         function renderAdminCustomersPagination(metadata) {
-            if (!metadata || Number(metadata.totalPages) <= 1) {
+            if (!metadata || !metadata.hasNextPage) {
                 return '';
             }
 
             return `
                 <div class="pagination-container admin-pagination">
-                    <button class="pagination-btn" onclick="loadCustomers(${metadata.currentPage - 1})" ${metadata.hasPreviousPage ? '' : 'disabled'}>
-                        <i class="fa-solid fa-chevron-left"></i> Anterior
+                    <button class="btn-hero" style="width: 100%; margin-top: 1rem;" onclick="loadCustomers(${metadata.currentPage + 1})">
+                        <i class="fa-solid fa-arrow-down"></i> Cargar más clientes
                     </button>
-                    <span class="pagination-info">
-                        Página ${metadata.currentPage} de ${metadata.totalPages} · Mostrando ${metadata.fromItem}-${metadata.toItem} de ${metadata.totalItems}
+                    <span class="pagination-info" style="text-align: center; display: block; margin-top: 0.5rem;">
+                        Mostrando ${metadata.fromItem}-${metadata.toItem} de ${metadata.totalItems}
                     </span>
-                    <button class="pagination-btn" onclick="loadCustomers(${metadata.currentPage + 1})" ${metadata.hasNextPage ? '' : 'disabled'}>
-                        Siguiente <i class="fa-solid fa-chevron-right"></i>
-                    </button>
                 </div>
             `;
         }
 
         function renderAdminCouponsPagination(metadata) {
-            if (!metadata || Number(metadata.totalPages) <= 1) {
+            if (!metadata || !metadata.hasNextPage) {
                 return '';
             }
 
             return `
                 <div class="pagination-container admin-pagination">
-                    <button class="pagination-btn" onclick="loadCoupons(${metadata.currentPage - 1})" ${metadata.hasPreviousPage ? '' : 'disabled'}>
-                        <i class="fa-solid fa-chevron-left"></i> Anterior
+                    <button class="btn-hero" style="width: 100%; margin-top: 1rem;" onclick="loadCoupons(${metadata.currentPage + 1})">
+                        <i class="fa-solid fa-arrow-down"></i> Cargar más descuentos
                     </button>
-                    <span class="pagination-info">
-                        Página ${metadata.currentPage} de ${metadata.totalPages} · Mostrando ${metadata.fromItem}-${metadata.toItem} de ${metadata.totalItems}
+                    <span class="pagination-info" style="text-align: center; display: block; margin-top: 0.5rem;">
+                        Mostrando ${metadata.fromItem}-${metadata.toItem} de ${metadata.totalItems}
                     </span>
-                    <button class="pagination-btn" onclick="loadCoupons(${metadata.currentPage + 1})" ${metadata.hasNextPage ? '' : 'disabled'}>
-                        Siguiente <i class="fa-solid fa-chevron-right"></i>
-                    </button>
                 </div>
             `;
         }
@@ -1480,9 +1480,19 @@
         
         async function loadProducts(page = adminProductsPage) {
             const container = document.getElementById('products-container');
+            
+            // Prevenir cargas simultáneas
+            if (isLoadingProducts) return;
+            isLoadingProducts = true;
+            
             adminProductsPage = Math.max(Number(page) || 1, 1);
             
             try {
+                // Si es la primera página, resetear datos acumulados
+                if (adminProductsPage === 1) {
+                    allProductsData = [];
+                }
+                
                 const response = await fetch(buildProductsUrl(adminProductsPage));
                 if (!response.ok) throw new Error('Error al cargar productos');
                 
@@ -1494,27 +1504,34 @@
                 
                 if ((!products || products.length === 0) && metadata?.totalItems > 0 && adminProductsPage > 1) {
                     await loadProducts(adminProductsPage - 1);
+                    isLoadingProducts = false;
                     return;
                 }
 
                 if (!products || products.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fa-solid fa-box-open"></i>
-                            <p>${hasActiveProductFilters() ? 'No hay productos que coincidan con el filtro' : 'No hay productos registrados'}</p>
-                            ${hasActiveProductFilters() ? `
-                                <button class="btn-hero" onclick="resetProductFilters()">
-                                    <i class="fa-solid fa-rotate-left"></i> Limpiar filtros
-                                </button>
-                            ` : `
-                                <button class="btn-hero" onclick="openProductModal()">
-                                    <i class="fa-solid fa-plus"></i> Crear primer producto
-                                </button>
-                            `}
-                        </div>
-                    `;
+                    if (adminProductsPage === 1) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fa-solid fa-box-open"></i>
+                                <p>${hasActiveProductFilters() ? 'No hay productos que coincidan con el filtro' : 'No hay productos registrados'}</p>
+                                ${hasActiveProductFilters() ? `
+                                    <button class="btn-hero" onclick="resetProductFilters()">
+                                        <i class="fa-solid fa-rotate-left"></i> Limpiar filtros
+                                    </button>
+                                ` : `
+                                    <button class="btn-hero" onclick="openProductModal()">
+                                        <i class="fa-solid fa-plus"></i> Crear primer producto
+                                    </button>
+                                `}
+                            </div>
+                        `;
+                    }
+                    isLoadingProducts = false;
                     return;
                 }
+                
+                // Acumular datos
+                allProductsData = allProductsData.concat(products);
                 
                 let html = `
                     <div class="admin-table-container">
@@ -1533,7 +1550,7 @@
                             <tbody>
                 `;
                 
-                products.forEach(product => {
+                allProductsData.forEach(product => {
                     const nombre = product.name || product.nombre || 'Sin nombre';
                     const precio = Number(product.price ?? product.precio ?? 0).toLocaleString('es-AR');
                     const stock = Number(product.stock ?? 0);
@@ -1571,15 +1588,19 @@
                 
             } catch (error) {
                 console.error('Error:', error);
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        <p>Error al cargar productos: ${error.message}</p>
-                        <button class="btn-hero" onclick="loadProducts()">
-                            <i class="fa-solid fa-rotate-right"></i> Reintentar
-                        </button>
-                    </div>
-                `;
+                if (adminProductsPage === 1) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <p>Error al cargar productos: ${error.message}</p>
+                            <button class="btn-hero" onclick="loadProducts()">
+                                <i class="fa-solid fa-rotate-right"></i> Reintentar
+                            </button>
+                        </div>
+                    `;
+                }
+            } finally {
+                isLoadingProducts = false;
             }
         }
         
@@ -1588,9 +1609,19 @@
         async function loadCustomers(page = adminCustomersPage) {
             const container = document.getElementById('customers-container');
             const token = localStorage.getItem('token');
+            
+            // Prevenir cargas simultáneas
+            if (isLoadingCustomers) return;
+            isLoadingCustomers = true;
+            
             adminCustomersPage = Math.max(Number(page) || 1, 1);
             
             try {
+                // Si es la primera página, resetear datos acumulados
+                if (adminCustomersPage === 1) {
+                    allCustomersData = [];
+                }
+                
                 const response = await fetch(buildCustomersUrl(adminCustomersPage), {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -1607,18 +1638,25 @@
 
                 if ((!customers || customers.length === 0) && metadata?.totalItems > 0 && adminCustomersPage > 1) {
                     await loadCustomers(adminCustomersPage - 1);
+                    isLoadingCustomers = false;
                     return;
                 }
                 
                 if (!customers || customers.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fa-solid fa-users"></i>
-                            <p>No hay clientes registrados</p>
-                        </div>
-                    `;
+                    if (adminCustomersPage === 1) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fa-solid fa-users"></i>
+                                <p>No hay clientes registrados</p>
+                            </div>
+                        `;
+                    }
+                    isLoadingCustomers = false;
                     return;
                 }
+                
+                // Acumular datos
+                allCustomersData = allCustomersData.concat(customers);
                 
                 let html = `
                     <div class="admin-table-container">
@@ -1635,7 +1673,7 @@
                             <tbody>
                 `;
                 
-                customers.forEach(customer => {
+                allCustomersData.forEach(customer => {
                     const nombre = customer.name || customer.nombre || 'Sin nombre';
                     const rol = customer.role === 'admin' ? 'admin' : 'user';
                     
@@ -1668,12 +1706,16 @@
                 
             } catch (error) {
                 console.error('Error:', error);
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        <p>Error al cargar clientes: ${error.message}</p>
-                    </div>
-                `;
+                if (adminCustomersPage === 1) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <p>Error al cargar clientes: ${error.message}</p>
+                        </div>
+                    `;
+                }
+            } finally {
+                isLoadingCustomers = false;
             }
         }
 
@@ -1681,9 +1723,18 @@
 
         async function loadCoupons(page = adminCouponsPage) {
             const container = document.getElementById('coupons-container');
+            
+            // Prevenir cargas simultáneas
+            if (isLoadingCoupons) return;
+            isLoadingCoupons = true;
+            
             adminCouponsPage = Math.max(Number(page) || 1, 1);
 
             try {
+                // Si es la primera página, resetear datos acumulados
+                if (adminCouponsPage === 1) {
+                    allCouponsData = [];
+                }
                 const response = await fetch(buildCouponsUrl(adminCouponsPage), {
                     headers: getAuthHeaders()
                 });
@@ -1698,21 +1749,28 @@
 
                 if ((!coupons || coupons.length === 0) && metadata?.totalItems > 0 && adminCouponsPage > 1) {
                     await loadCoupons(adminCouponsPage - 1);
+                    isLoadingCoupons = false;
                     return;
                 }
 
                 if (!coupons || coupons.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fa-solid fa-ticket"></i>
-                            <p>No hay cupones registrados</p>
-                            <button class="btn-hero" onclick="openCouponModal()">
-                                <i class="fa-solid fa-plus"></i> Crear primer cupón
-                            </button>
-                        </div>
-                    `;
+                    if (adminCouponsPage === 1) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fa-solid fa-ticket"></i>
+                                <p>No hay cupones registrados</p>
+                                <button class="btn-hero" onclick="openCouponModal()">
+                                    <i class="fa-solid fa-plus"></i> Crear primer cupón
+                                </button>
+                            </div>
+                        `;
+                    }
+                    isLoadingCoupons = false;
                     return;
                 }
+
+                // Acumular datos
+                allCouponsData = allCouponsData.concat(coupons);
 
                 let html = `
                     <div class="admin-table-container">
@@ -1731,7 +1789,7 @@
                             <tbody>
                 `;
 
-                coupons.forEach((coupon) => {
+                allCouponsData.forEach((coupon) => {
                     const couponId = getCouponId(coupon);
                     const status = getCouponStatus(coupon);
                     const usosActuales = Number(coupon.usos_actuales || 0);
@@ -1767,15 +1825,19 @@
                 container.innerHTML = html;
             } catch (error) {
                 console.error('Error:', error);
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        <p>Error al cargar cupones: ${error.message}</p>
-                        <button class="btn-hero" onclick="loadCoupons()">
-                            <i class="fa-solid fa-rotate-right"></i> Reintentar
+                if (adminCouponsPage === 1) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                            <p>Error al cargar cupones: ${error.message}</p>
+                            <button class="btn-hero" onclick="loadCoupons()">
+                                <i class="fa-solid fa-rotate-right"></i> Reintentar
                         </button>
                     </div>
                 `;
+                }
+            } finally {
+                isLoadingCoupons = false;
             }
         }
         
