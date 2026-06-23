@@ -1,9 +1,11 @@
 // ========== VARIABLES GLOBALES ==========
 let allProducts = [];
+let accumulatedProducts = [];
 let currentCategory = 'all';
 let currentProductsPage = 1;
 let productsPagination = null;
-const PRODUCTS_PAGE_LIMIT = 9;
+let isLoadingProducts = false;
+const PRODUCTS_PAGE_LIMIT = 10;
 
 // ========== FUNCIONES DE UTILIDAD ==========
 function showNotification(message, tipo = 'success') {
@@ -210,8 +212,8 @@ function renderProductsPagination(metadata) {
     productsList.insertAdjacentElement('afterend', pagination);
   }
 
-  const totalPages = Number(metadata?.totalPages) || 0;
-  if (totalPages <= 1) {
+  // Si no hay siguiente página, no mostrar botón
+  if (!metadata || !metadata.hasNextPage) {
     pagination.innerHTML = '';
     return;
   }
@@ -223,18 +225,15 @@ function renderProductsPagination(metadata) {
   const toItem = Math.min(currentPage * limit, totalItems);
 
   pagination.innerHTML = `
-    <button class="pagination-btn" data-page="${currentPage - 1}" ${metadata.hasPreviousPage ? '' : 'disabled'}>
-      <i class="fa-solid fa-chevron-left"></i> Anterior
+    <button class="pagination-btn btn-load-more" data-page="${currentPage + 1}">
+      <i class="fa-solid fa-arrow-down"></i> Cargar más
     </button>
     <span class="pagination-info">
-      Página ${currentPage} de ${totalPages} · Mostrando ${fromItem}-${toItem} de ${totalItems}
+      Mostrando ${fromItem}-${toItem} de ${totalItems}
     </span>
-    <button class="pagination-btn" data-page="${currentPage + 1}" ${metadata.hasNextPage ? '' : 'disabled'}>
-      Siguiente <i class="fa-solid fa-chevron-right"></i>
-    </button>
   `;
 
-  pagination.querySelectorAll('.pagination-btn').forEach((btn) => {
+  pagination.querySelectorAll('.btn-load-more').forEach((btn) => {
     btn.addEventListener('click', () => {
       const page = Number(btn.dataset.page);
       if (page > 0) loadProductsPage(page);
@@ -292,8 +291,18 @@ async function loadProductsPage(page = 1) {
   const productsList = document.getElementById('products-list');
   if (!productsList) return;
 
+  // Prevenir cargas simultáneas
+  if (isLoadingProducts) return;
+  isLoadingProducts = true;
+
   try {
     currentProductsPage = Math.max(Number(page) || 1, 1);
+    
+    // Si es la primera página, resetear datos acumulados
+    if (currentProductsPage === 1) {
+      accumulatedProducts = [];
+    }
+    
     const params = new URLSearchParams({
       page: currentProductsPage,
       limit: PRODUCTS_PAGE_LIMIT,
@@ -303,7 +312,11 @@ async function loadProductsPage(page = 1) {
       params.set('categoria', currentCategory);
     }
 
-    productsList.innerHTML = '<p>Cargando productos...</p>';
+    // Solo mostrar "Cargando" en la primera página
+    if (currentProductsPage === 1) {
+      productsList.innerHTML = '<p>Cargando productos...</p>';
+    }
+    
     const response = await fetch(`/api/productos?${params.toString()}`);
 
     if (!response.ok) throw new Error('Error al cargar productos');
@@ -314,17 +327,28 @@ async function loadProductsPage(page = 1) {
     productsPagination = paginated.metadata;
 
     if (allProducts.length === 0) {
-      productsList.innerHTML = '<p>No hay productos disponibles</p>';
+      if (currentProductsPage === 1) {
+        productsList.innerHTML = '<p>No hay productos disponibles</p>';
+      }
       renderProductsPagination(productsPagination);
+      isLoadingProducts = false;
       return;
     }
+    
+    // Acumular productos
+    accumulatedProducts = accumulatedProducts.concat(allProducts);
+    
     bindCategoryFilterButtons();
-    displayFilteredProducts(allProducts);
+    displayFilteredProducts(accumulatedProducts);
     renderProductsPagination(productsPagination);
   } catch (error) {
     console.error('Error:', error);
-    productsList.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    if (currentProductsPage === 1) {
+      productsList.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+    }
     renderProductsPagination(null);
+  } finally {
+    isLoadingProducts = false;
   }
 }
 
