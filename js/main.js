@@ -442,6 +442,56 @@ function emptyCart() {
   }
 }
 
+async function applyCoupon() {
+  const couponInput = document.getElementById('coupon-code');
+  const couponMessage = document.getElementById('coupon-message');
+  
+  if (!couponInput || !couponMessage) return;
+
+  const code = couponInput.value.trim().toUpperCase();
+  if (!code) {
+    couponMessage.textContent = 'Por favor ingresa un código de cupón';
+    couponMessage.className = 'coupon-message error';
+    return;
+  }
+
+  const cart = getCart();
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  if (total === 0) {
+    couponMessage.textContent = 'Tu carrito está vacío';
+    couponMessage.className = 'coupon-message error';
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/cupones/aplicar/${code}?monto=${total}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      couponMessage.textContent = data.mensaje || 'Cupón inválido';
+      couponMessage.className = 'coupon-message error';
+      return;
+    }
+
+    const descuento = data.ahorro || 0;
+    const montoFinal = data.monto_final || total;
+
+    couponMessage.textContent = `✓ Cupón aplicado: ${data.codigo} | Descuento: -$${descuento.toLocaleString('es-AR')} | Nuevo total: $${montoFinal.toLocaleString('es-AR')}`;
+    couponMessage.className = 'coupon-message success';
+
+    // Actualizar el total mostrado
+    document.getElementById('cart-total').textContent = `$${montoFinal.toLocaleString('es-AR')}`;
+
+    // Guardar el cupón aplicado en sessionStorage para el checkout
+    sessionStorage.setItem('cuponAplicado', code);
+    sessionStorage.setItem('montoConDescuento', montoFinal);
+  } catch (error) {
+    couponMessage.textContent = 'Error al validar cupón: ' + error.message;
+    couponMessage.className = 'coupon-message error';
+  }
+}
+
 async function checkout() {
   const cart = getCart();
   if (cart.length === 0) {
@@ -449,7 +499,13 @@ async function checkout() {
     return;
   }
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  let total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  
+  // Usar el monto con descuento si hay cupón aplicado
+  const montoConDescuento = sessionStorage.getItem('montoConDescuento');
+  if (montoConDescuento) {
+    total = parseFloat(montoConDescuento);
+  }
 
   try {
     const response = await fetch('/api/checkout', {
@@ -462,6 +518,8 @@ async function checkout() {
 
     alert(`¡Compra realizada! Total: $${total.toLocaleString('es-AR')}`);
     saveCart([]);
+    sessionStorage.removeItem('cuponAplicado');
+    sessionStorage.removeItem('montoConDescuento');
     renderCart();
     window.location.href = '/index.html';
   } catch (error) {
@@ -826,6 +884,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const btnCheckout = document.getElementById('btn-checkout');
   if (btnCheckout) btnCheckout.addEventListener('click', checkout);
+
+  const btnApplyCoupon = document.getElementById('btn-apply-coupon');
+  if (btnApplyCoupon) btnApplyCoupon.addEventListener('click', applyCoupon);
 
   // Actualizar navbar según login
   const token = localStorage.getItem('token');
