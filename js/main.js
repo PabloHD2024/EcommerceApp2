@@ -4,13 +4,9 @@ let accumulatedProducts = [];
 let currentCategory = 'all';
 let currentProductsPage = 1;
 let productsPagination = null;
-<<<<<<< HEAD
-const PRODUCTS_PAGE_LIMIT = 9;
-let descuentoActivo = 0;
-=======
+
 let isLoadingProducts = false;
 const PRODUCTS_PAGE_LIMIT = 10;
->>>>>>> afbaf30bcc9b91e5d5df402043cb328b6c1e73d0
 
 // ========== FUNCIONES DE UTILIDAD ==========
 function showNotification(message, tipo = 'success') {
@@ -74,7 +70,7 @@ function addToCart(producto) {
       id: producto.id,
       name: producto.name,
       price: producto.price,
-      image: producto.image || '../img/placeholder.png',
+      image: producto.image || '/img/placeholder.png',
       stock: stock,
       quantity: 1,
     });
@@ -164,7 +160,7 @@ function displayFilteredProducts(products) {
   filtered.forEach((product) => {
     const nombre = product.name || product.nombre;
     const precio = product.price || product.precio;
-    const imagen = product.image || product.imagen || '../img/placeholder.png';
+    const imagen = product.image || product.imagen || '/img/placeholder.png';
     const stock = Number(product.stock) || 0;
     const sinStock = stock <= 0;
     const rating = Number(product.rating) || 4;
@@ -186,7 +182,7 @@ function displayFilteredProducts(products) {
     card.className = `product-card ${sinStock ? 'out-of-stock' : ''}`;
     card.innerHTML = `
       <div class="product-image">
-        <img src="${imagen}" alt="${nombre}" onerror="this.src='../img/placeholder.png'">
+        <img src="${imagen}" alt="${nombre}" onerror="this.src='/img/placeholder.png'">
       </div>
       <h3>${nombre}</h3>
       <div class="rating">${starsHTML} <span>(${reviews})</span></div>

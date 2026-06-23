@@ -25,14 +25,14 @@
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./ecommerce.sqlite');
 
-db.all("SELECT id, nombre, imagen FROM productos", [], (err, rows) => {
+db.all("SELECT id, nombre, image FROM productos", [], (err, rows) => {
     if (err) {
         console.error(err);
         return;
     }
     console.log('Productos en BD:');
     rows.forEach(row => {
-        console.log(`${row.id}: ${row.nombre} -> ${row.imagen}`);
+        console.log(`${row.id}: ${row.nombre} -> ${row.image}`);
     });
 });
 db.close();
