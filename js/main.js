@@ -27,7 +27,7 @@ function showNotification(message, tipo = 'success') {
 
   setTimeout(() => {
     notification.classList.remove('show');
-  }, 2000);
+  }, 2500);
 }
 
 function getCart() {
