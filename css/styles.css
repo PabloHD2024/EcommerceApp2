@@ -535,7 +535,7 @@ input, textarea {
     border-radius: 12px;
     box-shadow: var(--shadow);
     margin: 50px auto;
-    max-width: 800px;
+    max-width: 900px;
 }
 
 .cart-container h1 {
@@ -573,9 +573,9 @@ input, textarea {
 
 .item-controls {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 10px;
+    gap: 20px;
     color: var(--dark-color);
 }
 
@@ -1190,6 +1190,9 @@ footer p span {
 
     .item-controls {
         grid-column: 2;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
     }
 
     .btn-remove {

@@ -502,11 +502,17 @@ async function applyCoupon() {
     const descuento = data.ahorro || 0;
     const montoFinal = data.monto_final || total;
 
-    couponMessage.textContent = `✓ Cupón aplicado: ${data.codigo} | Descuento: -$${descuento.toLocaleString('es-AR')} | Nuevo total: $${montoFinal.toLocaleString('es-AR')}`;
+    couponMessage.textContent = `✓ Cupón aplicado: ${data.codigo} | Descuento: -$${descuento.toLocaleString('es-AR')}`;
     couponMessage.className = 'coupon-message success';
 
-    // Actualizar el total mostrado
-    document.getElementById('cart-total').textContent = `$${montoFinal.toLocaleString('es-AR')}`;
+    // CORRECCIÓN: Precio anterior tachado/atenuado y precio nuevo resaltado en verde
+    const cartTotalEl = document.getElementById('cart-total');
+    if (cartTotalEl) {
+      cartTotalEl.innerHTML = `
+        <span style="text-decoration: line-through; color: #a0a0a0; font-size: 0.9em; margin-right: 10px;">$${total.toLocaleString('es-AR')}</span>
+        <span style="color: #27ae60; font-weight: bold; font-size: 1.2em;">$${montoFinal.toLocaleString('es-AR')}</span>
+      `;
+    }
 
     // Guardar el cupón aplicado en sessionStorage para el checkout
     sessionStorage.setItem('cuponAplicado', code);
@@ -517,8 +523,83 @@ async function applyCoupon() {
   }
 }
 
+function renderCart() {
+  const container = document.getElementById('cart-items');
+  if (!container) return;
+
+  const cart = getCart();
+
+  if (cart.length === 0) {
+    container.innerHTML = '<p class="empty-cart">Tu carrito está vacío</p>';
+    document.getElementById('cart-total').textContent = '$0';
+    return;
+  }
+
+  let total = 0;
+  container.innerHTML = '';
+
+  cart.forEach((item, index) => {
+    const subtotal = item.price * item.quantity;
+    total += subtotal;
+
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'cart-item';
+    itemDiv.innerHTML = `
+      <img src="${item.image}" alt="${item.name}" onerror="this.src='../img/placeholder.png'">
+      <div class="item-info">
+        <h3>${item.name}</h3>
+        <p>$${item.price.toLocaleString('es-AR')} c/u</p>
+      </div>
+      <div class="item-controls">
+        <button class="btn-qty" data-index="${index}" data-change="-1">-</button>
+        <span>${item.quantity}</span>
+        <button class="btn-qty" data-index="${index}" data-change="1">+</button>
+        <p class="item-subtotal">$${subtotal.toLocaleString('es-AR')}</p>
+      </div>
+      <button class="btn-remove" data-index="${index}"><i class="fa-solid fa-trash"></i></button>
+    `;
+    container.appendChild(itemDiv);
+  });
+
+  // Renderizar total normal
+  document.getElementById('cart-total').textContent = `$${total.toLocaleString('es-AR')}`;
+
+  // OPTATIVO/RECOMENDADO: Si el usuario modifica el carrito, limpiamos cupones previos para evitar desfases de precio
+  sessionStorage.removeItem('cuponAplicado');
+  sessionStorage.removeItem('montoConDescuento');
+
+  // Eventos
+  document.querySelectorAll('.btn-qty').forEach((btn) => {
+    btn.replaceWith(btn.cloneNode(true)); // Limpia listeners previos redundantes
+  });
+  
+  document.querySelectorAll('.btn-qty').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(btn.dataset.index);
+      const change = parseInt(btn.dataset.change);
+      let cart = getCart();
+      if (cart[idx]) {
+        const newQty = cart[idx].quantity + change;
+        if (newQty <= 0) cart.splice(idx, 1);
+        else cart[idx].quantity = newQty;
+        saveCart(cart);
+        renderCart();
+      }
+    });
+  });
+
+  document.querySelectorAll('.btn-remove').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      let cart = getCart();
+      cart.splice(parseInt(btn.dataset.index), 1);
+      saveCart(cart);
+      renderCart();
+    });
+  });
+}
+
 async function checkout() {
-  // NUEVO: Verificar si el usuario está logueado
+  // Verificar si el usuario está logueado
   const token = localStorage.getItem('token');
   if (!token) {
     showNotification('Debes iniciar sesión para finalizar la compra', 'error');
@@ -533,14 +614,17 @@ async function checkout() {
     return;
   }
 
-  // Calcular total contemplando el descuento que hicimos en el punto anterior
+  // Calcular total base
   let total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  if (descuentoActivo > 0) {
-    total = total * (1 - descuentoActivo / 100);
+  
+  // CORRECCIÓN: Validar el descuento usando sessionStorage en lugar de descuentoActivo
+  const montoConDescuento = sessionStorage.getItem('montoConDescuento');
+  if (montoConDescuento) {
+    total = parseFloat(montoConDescuento);
   }
 
   try {
-    // NUEVO: Enviamos el token en los headers para que el Backend también lo valide de forma segura
+    // Enviamos el token en los headers para que el Backend también lo valide de forma segura
     const response = await fetch('/api/checkout', {
       method: 'POST',
       headers: { 
@@ -553,7 +637,11 @@ async function checkout() {
     if (!response.ok) throw new Error('Error en checkout');
 
     alert(`¡Compra realizada! Total: $${total.toLocaleString('es-AR')}`);
-    descuentoActivo = 0; // Reseteamos el cupón
+    
+    // CORRECCIÓN: Limpiar cupones de la sesión tras la compra exitosa
+    sessionStorage.removeItem('cuponAplicado');
+    sessionStorage.removeItem('montoConDescuento');
+    
     saveCart([]);
     renderCart();
     window.location.href = '/index.html';
@@ -561,6 +649,7 @@ async function checkout() {
     showNotification('Error al procesar compra', 'error');
   }
 }
+
 // ========== LOGIN Y REGISTRO ==========
 function switchAuth(view) {
   const loginTab = document.getElementById('tab-login');
@@ -672,6 +761,33 @@ function initAuthForms() {
   }
 }
 
+// Actualizar navbar según login
+  const token = localStorage.getItem('token');
+  const btnLogin = document.getElementById('btn-nav-login');
+  const btnLogout = document.getElementById('btn-nav-logout');
+
+  if (token && btnLogin && btnLogout) {
+    btnLogin.style.display = 'none';
+    btnLogout.style.display = 'block';
+
+    // NUEVO: Mostrar nombre de bienvenida al lado del botón salir
+    const userName = localStorage.getItem('userName');
+    if (userName) {
+      let greetingEl = document.getElementById('nav-user-greeting');
+      if (!greetingEl) {
+        greetingEl = document.createElement('span');
+        greetingEl.id = 'nav-user-greeting';
+        greetingEl.style.color = 'white';
+        greetingEl.style.marginRight = '10px';
+        greetingEl.style.fontSize = '0.9rem';
+        greetingEl.style.alignSelf = 'center';
+        // Inserta el texto justo antes del botón "Salir"
+        btnLogout.parentNode.insertBefore(greetingEl, btnLogout);
+      }
+      greetingEl.textContent = `Bienvenido, ${userName} | `;
+    }
+  }
+
 // ========== LOGOUT ==========
 async function logoutUsuario() {
   const token = localStorage.getItem('token');
@@ -696,6 +812,32 @@ async function logoutUsuario() {
   showNotification('Sesión cerrada');
   setTimeout(() => (window.location.href = '/index.html'), 1000);
 }
+
+// ========== MANEJO DEL FORMULARIO DE CONTACTO (PRESENTACIÓN) ==========
+document.addEventListener('DOMContentLoaded', () => {
+  const contactForm = document.querySelector('.contact-form');
+  
+  if (contactForm) {
+    contactForm.addEventListener('submit', (e) => {
+      // 1. Evitamos que la página se recargue por defecto
+      e.preventDefault(); 
+      
+      // 2. Capturamos el nombre para personalizar la respuesta
+      const nombreUsuario = document.getElementById('name')?.value || 'Gracias';
+
+      // 3. Mostramos un mensaje estético usando tu función de notificaciones
+      if (typeof showNotification === 'function') {
+        showNotification(`¡Gracias, ${nombreUsuario}! Tu mensaje ha sido enviado. Te responderemos a la brevedad.`, 'success');
+      } else {
+        // Respaldo por si la función de notificación no se llega a cargar
+        alert(`¡Gracias, ${nombreUsuario}! Tu mensaje ha sido enviado con éxito. Nos comunicaremos a la brevedad.`);
+      }
+
+      // 4. Limpiamos los campos del formulario para que quede listo de nuevo
+      contactForm.reset();
+    });
+  }
+});
 
 // ========== ADMIN PANEL ==========
 async function loadAdminProducts() {
