@@ -5,7 +5,7 @@ const Cupon = sequelize.define('Cupon', {
 
   codigo: {
     type: DataTypes.STRING,
-    allowNull: true,
+    allowNull: false,
     unique: true,
     set(val) {
       if (val) this.setDataValue('codigo', val.toUpperCase().trim());

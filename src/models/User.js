@@ -20,6 +20,13 @@ const User = sequelize.define("User", {
             isEmail: true
         }
     },
+    telefono: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        validate: {
+            is: /^[0-9]+$/i
+        }
+    },
     password: {
         type: DataTypes.STRING,
         allowNull: false

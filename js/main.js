@@ -34,9 +34,90 @@ function getCart() {
   return JSON.parse(localStorage.getItem('cart')) || [];
 }
 
-function saveCart(cart) {
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[char]);
+}
+
+function clearAppliedCoupon() {
+  sessionStorage.removeItem('cuponAplicado');
+  sessionStorage.removeItem('montoConDescuento');
+
+  const couponMessage = document.getElementById('coupon-message');
+  if (couponMessage) {
+    couponMessage.textContent = '';
+    couponMessage.className = 'coupon-message';
+  }
+}
+
+function showPurchaseConfirmation(data, cart) {
+  let modal = document.getElementById('purchase-confirmation-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'purchase-confirmation-modal';
+    modal.className = 'purchase-modal-overlay';
+    document.body.appendChild(modal);
+  }
+
+  const totalFinal = Number(data.total || 0);
+  const totalOriginal = Number(data.total_original || totalFinal);
+  const cupon = data.cupon_aplicado;
+  const totalItems = cart.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  const orderCode = `ORD-${Date.now().toString().slice(-8)}`;
+
+  modal.innerHTML = `
+    <div class="purchase-modal" role="dialog" aria-modal="true" aria-labelledby="purchase-title">
+      <div class="purchase-modal-icon"><i class="fa-solid fa-check"></i></div>
+      <h2 id="purchase-title">Compra confirmada</h2>
+      <p class="purchase-modal-copy">
+        Te enviaremos la información de la compra al email registrado. Si tenés WhatsApp asociado al teléfono, también podremos contactarte por ese medio.
+      </p>
+      <div class="purchase-summary">
+        <div><span>Orden</span><strong>${orderCode}</strong></div>
+        <div><span>Productos</span><strong>${totalItems}</strong></div>
+        <div><span>Total</span><strong>$${totalFinal.toLocaleString('es-AR')}</strong></div>
+        ${
+          cupon
+            ? `<div><span>Cupón</span><strong>${escapeHtml(cupon.codigo)} (${Number(cupon.descuento)}% OFF)</strong></div>`
+            : ''
+        }
+        ${
+          totalOriginal > totalFinal
+            ? `<div><span>Ahorro</span><strong>$${(totalOriginal - totalFinal).toLocaleString('es-AR')}</strong></div>`
+            : ''
+        }
+      </div>
+      <div class="purchase-modal-actions">
+        <button type="button" class="btn-buy" id="purchase-home">Ir al inicio</button>
+        <button type="button" class="btn-empty" id="purchase-continue">Seguir comprando</button>
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('active');
+  document.body.classList.add('modal-open');
+
+  document.getElementById('purchase-home')?.addEventListener('click', () => {
+    window.location.href = '/index.html';
+  });
+
+  document.getElementById('purchase-continue')?.addEventListener('click', () => {
+    window.location.href = '/html/productos.html';
+  });
+}
+
+function saveCart(cart, options = {}) {
   localStorage.setItem('cart', JSON.stringify(cart));
   updateCartCount();
+
+  if (options.clearCoupon !== false) {
+    clearAppliedCoupon();
+  }
 }
 
 function updateCartCount() {
@@ -159,12 +240,14 @@ function displayFilteredProducts(products) {
 
   filtered.forEach((product) => {
     const nombre = product.name || product.nombre;
-    const precio = product.price || product.precio;
+    const precio = Number(product.price || product.precio || 0);
     const imagen = product.image || product.imagen || '/img/placeholder.png';
     const stock = Number(product.stock) || 0;
     const sinStock = stock <= 0;
     const rating = Number(product.rating) || 4;
     const reviews = product.reviews || 0;
+    const nombreSeguro = escapeHtml(nombre);
+    const imagenSegura = escapeHtml(imagen);
 
     // Generar estrellas
     let starsHTML = '';
@@ -182,16 +265,16 @@ function displayFilteredProducts(products) {
     card.className = `product-card ${sinStock ? 'out-of-stock' : ''}`;
     card.innerHTML = `
       <div class="product-image">
-        <img src="${imagen}" alt="${nombre}" onerror="this.src='/img/placeholder.png'">
+        <img src="${imagenSegura}" alt="${nombreSeguro}" onerror="this.src='/img/placeholder.png'">
       </div>
-      <h3>${nombre}</h3>
+      <h3>${nombreSeguro}</h3>
       <div class="rating">${starsHTML} <span>(${reviews})</span></div>
       <p class="price">$${precio.toLocaleString('es-AR')}</p>
       <div class="stock-info">
         ${sinStock ? '<span class="sin-stock">Sin stock</span>' : `<span class="con-stock">Stock: ${stock}</span>`}
       </div>
-      <button class="btn-add" data-id="${product.id}" data-name="${nombre}" 
-              data-price="${precio}" data-image="${imagen}" data-stock="${stock}" ${sinStock ? 'disabled' : ''}>
+      <button class="btn-add" data-id="${escapeHtml(product.id)}" data-name="${nombreSeguro}"
+              data-price="${precio}" data-image="${imagenSegura}" data-stock="${stock}" ${sinStock ? 'disabled' : ''}>
         <i class="fa-solid fa-cart-plus"></i> ${sinStock ? 'Agotado' : 'Añadir'}
       </button>
     `;
@@ -345,7 +428,7 @@ async function loadProductsPage(page = 1) {
   } catch (error) {
     console.error('Error:', error);
     if (currentProductsPage === 1) {
-      productsList.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+      productsList.innerHTML = `<p class="error">Error: ${escapeHtml(error.message)}</p>`;
     }
     renderProductsPagination(null);
   } finally {
@@ -366,20 +449,22 @@ async function loadFeaturedProducts() {
     container.innerHTML = '';
     destacados.forEach((product) => {
       const nombre = product.name || product.nombre;
-      const precio = product.price || product.precio;
+      const precio = Number(product.price || product.precio || 0);
       const imagen = product.image || product.imagen || 'img/placeholder.png';
       const stock = Number(product.stock) || 0;
+      const nombreSeguro = escapeHtml(nombre);
+      const imagenSegura = escapeHtml(imagen);
 
       const card = document.createElement('div');
       card.className = 'product-card';
       card.innerHTML = `
         <div class="product-image">
-          <img src="${imagen}" alt="${nombre}" onerror="this.src='img/placeholder.png'">
+          <img src="${imagenSegura}" alt="${nombreSeguro}" onerror="this.src='img/placeholder.png'">
         </div>
-        <h3>${nombre}</h3>
+        <h3>${nombreSeguro}</h3>
         <p class="price">$${precio.toLocaleString('es-AR')}</p>
-        <button class="btn-add" data-id="${product.id}" data-name="${nombre}" 
-                data-price="${precio}" data-image="${imagen}" data-stock="${stock}" ${stock <= 0 ? 'disabled' : ''}>
+        <button class="btn-add" data-id="${escapeHtml(product.id)}" data-name="${nombreSeguro}"
+                data-price="${precio}" data-image="${imagenSegura}" data-stock="${stock}" ${stock <= 0 ? 'disabled' : ''}>
           <i class="fa-solid fa-cart-plus"></i> ${stock <= 0 ? 'Agotado' : 'Comprar'}
         </button>
       `;
@@ -408,20 +493,24 @@ function renderCart() {
   container.innerHTML = '';
 
   cart.forEach((item, index) => {
-    const subtotal = item.price * item.quantity;
+    const itemName = escapeHtml(item.name);
+    const itemImage = escapeHtml(item.image || '../img/placeholder.png');
+    const itemPrice = Number(item.price) || 0;
+    const itemQuantity = Number(item.quantity) || 0;
+    const subtotal = itemPrice * itemQuantity;
     total += subtotal;
 
     const itemDiv = document.createElement('div');
     itemDiv.className = 'cart-item';
     itemDiv.innerHTML = `
-      <img src="${item.image}" alt="${item.name}" onerror="this.src='../img/placeholder.png'">
+      <img src="${itemImage}" alt="${itemName}" onerror="this.src='../img/placeholder.png'">
       <div class="item-info">
-        <h3>${item.name}</h3>
-        <p>$${item.price.toLocaleString('es-AR')} c/u</p>
+        <h3>${itemName}</h3>
+        <p>$${itemPrice.toLocaleString('es-AR')} c/u</p>
       </div>
       <div class="item-controls">
         <button class="btn-qty" data-index="${index}" data-change="-1">-</button>
-        <span>${item.quantity}</span>
+        <span>${itemQuantity}</span>
         <button class="btn-qty" data-index="${index}" data-change="1">+</button>
         <p class="item-subtotal">$${subtotal.toLocaleString('es-AR')}</p>
       </div>
@@ -475,6 +564,7 @@ async function applyCoupon() {
 
   const code = couponInput.value.trim().toUpperCase();
   if (!code) {
+    clearAppliedCoupon();
     couponMessage.textContent = 'Por favor ingresa un código de cupón';
     couponMessage.className = 'coupon-message error';
     return;
@@ -484,6 +574,7 @@ async function applyCoupon() {
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   if (total === 0) {
+    clearAppliedCoupon();
     couponMessage.textContent = 'Tu carrito está vacío';
     couponMessage.className = 'coupon-message error';
     return;
@@ -494,6 +585,7 @@ async function applyCoupon() {
     const data = await response.json();
 
     if (!response.ok) {
+      clearAppliedCoupon();
       couponMessage.textContent = data.mensaje || 'Cupón inválido';
       couponMessage.className = 'coupon-message error';
       return;
@@ -518,84 +610,10 @@ async function applyCoupon() {
     sessionStorage.setItem('cuponAplicado', code);
     sessionStorage.setItem('montoConDescuento', montoFinal);
   } catch (error) {
+    clearAppliedCoupon();
     couponMessage.textContent = 'Error al validar cupón: ' + error.message;
     couponMessage.className = 'coupon-message error';
   }
-}
-
-function renderCart() {
-  const container = document.getElementById('cart-items');
-  if (!container) return;
-
-  const cart = getCart();
-
-  if (cart.length === 0) {
-    container.innerHTML = '<p class="empty-cart">Tu carrito está vacío</p>';
-    document.getElementById('cart-total').textContent = '$0';
-    return;
-  }
-
-  let total = 0;
-  container.innerHTML = '';
-
-  cart.forEach((item, index) => {
-    const subtotal = item.price * item.quantity;
-    total += subtotal;
-
-    const itemDiv = document.createElement('div');
-    itemDiv.className = 'cart-item';
-    itemDiv.innerHTML = `
-      <img src="${item.image}" alt="${item.name}" onerror="this.src='../img/placeholder.png'">
-      <div class="item-info">
-        <h3>${item.name}</h3>
-        <p>$${item.price.toLocaleString('es-AR')} c/u</p>
-      </div>
-      <div class="item-controls">
-        <button class="btn-qty" data-index="${index}" data-change="-1">-</button>
-        <span>${item.quantity}</span>
-        <button class="btn-qty" data-index="${index}" data-change="1">+</button>
-        <p class="item-subtotal">$${subtotal.toLocaleString('es-AR')}</p>
-      </div>
-      <button class="btn-remove" data-index="${index}"><i class="fa-solid fa-trash"></i></button>
-    `;
-    container.appendChild(itemDiv);
-  });
-
-  // Renderizar total normal
-  document.getElementById('cart-total').textContent = `$${total.toLocaleString('es-AR')}`;
-
-  // OPTATIVO/RECOMENDADO: Si el usuario modifica el carrito, limpiamos cupones previos para evitar desfases de precio
-  sessionStorage.removeItem('cuponAplicado');
-  sessionStorage.removeItem('montoConDescuento');
-
-  // Eventos
-  document.querySelectorAll('.btn-qty').forEach((btn) => {
-    btn.replaceWith(btn.cloneNode(true)); // Limpia listeners previos redundantes
-  });
-  
-  document.querySelectorAll('.btn-qty').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      const idx = parseInt(btn.dataset.index);
-      const change = parseInt(btn.dataset.change);
-      let cart = getCart();
-      if (cart[idx]) {
-        const newQty = cart[idx].quantity + change;
-        if (newQty <= 0) cart.splice(idx, 1);
-        else cart[idx].quantity = newQty;
-        saveCart(cart);
-        renderCart();
-      }
-    });
-  });
-
-  document.querySelectorAll('.btn-remove').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      let cart = getCart();
-      cart.splice(parseInt(btn.dataset.index), 1);
-      saveCart(cart);
-      renderCart();
-    });
-  });
 }
 
 async function checkout() {
@@ -614,39 +632,44 @@ async function checkout() {
     return;
   }
 
-  // Calcular total base
   let total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  
-  // CORRECCIÓN: Validar el descuento usando sessionStorage en lugar de descuentoActivo
-  const montoConDescuento = sessionStorage.getItem('montoConDescuento');
-  if (montoConDescuento) {
-    total = parseFloat(montoConDescuento);
+  const cuponAplicado = sessionStorage.getItem('cuponAplicado') || null;
+  const checkoutButton = document.getElementById('btn-checkout');
+
+  if (checkoutButton) {
+    checkoutButton.disabled = true;
+    checkoutButton.textContent = 'Procesando...';
   }
 
   try {
-    // Enviamos el token en los headers para que el Backend también lo valide de forma segura
     const response = await fetch('/api/checkout', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}` 
       },
-      body: JSON.stringify({ carrito: cart, total }),
+      body: JSON.stringify({ carrito: cart, total, cupon_aplicado: cuponAplicado }),
     });
 
-    if (!response.ok) throw new Error('Error en checkout');
+    const data = await response.json().catch(() => ({}));
 
-    alert(`¡Compra realizada! Total: $${total.toLocaleString('es-AR')}`);
-    
-    // CORRECCIÓN: Limpiar cupones de la sesión tras la compra exitosa
-    sessionStorage.removeItem('cuponAplicado');
-    sessionStorage.removeItem('montoConDescuento');
-    
+    if (!response.ok) {
+      throw new Error(data.mensaje || data.message || 'Error en checkout');
+    }
+
+    clearAppliedCoupon();
     saveCart([]);
     renderCart();
-    window.location.href = '/index.html';
+    showPurchaseConfirmation(data, cart);
   } catch (error) {
-    showNotification('Error al procesar compra', 'error');
+    const message = error.message || 'Error al procesar compra';
+    showNotification(message, 'error');
+    alert(message);
+  } finally {
+    if (checkoutButton) {
+      checkoutButton.disabled = false;
+      checkoutButton.textContent = 'Finalizar Pago';
+    }
   }
 }
 
@@ -674,6 +697,13 @@ function switchAuth(view) {
 function initAuthForms() {
   const loginForm = document.getElementById('form-login');
   const registerForm = document.getElementById('form-register');
+  const phoneInput = document.getElementById('reg-telefono');
+
+  if (phoneInput) {
+    phoneInput.addEventListener('input', () => {
+      phoneInput.value = phoneInput.value.replace(/\D/g, '');
+    });
+  }
 
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
@@ -724,11 +754,17 @@ function initAuthForms() {
       e.preventDefault();
       const name = document.getElementById('reg-name')?.value;
       const email = document.getElementById('reg-email')?.value;
+      const telefono = document.getElementById('reg-telefono')?.value;
       const password = document.getElementById('reg-password')?.value;
       const terms = document.getElementById('reg-terms')?.checked;
 
-      if (!name || !email || !password) {
+      if (!name || !email || !telefono || !password) {
         showNotification('Completa todos los campos', 'error');
+        return;
+      }
+
+      if (!/^[0-9]+$/.test(telefono)) {
+        showNotification('El teléfono debe contener solo números', 'error');
         return;
       }
 
@@ -741,7 +777,7 @@ function initAuthForms() {
         const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, password }),
+          body: JSON.stringify({ name, email, telefono, password }),
         });
 
         const data = await response.json();
@@ -859,13 +895,13 @@ async function loadAdminProducts() {
 
     products.forEach((p) => {
       const nombre = p.name || p.nombre;
-      const precio = p.price || p.precio;
+      const precio = Number(p.price || p.precio || 0);
       html += `
         <tr>
-          <td>${p.id}</td>
-          <td>${nombre}</td>
+          <td>${escapeHtml(p.id)}</td>
+          <td>${escapeHtml(nombre)}</td>
           <td>$${precio}</td>
-          <td>${p.stock}</td>
+          <td>${escapeHtml(p.stock)}</td>
           <td>
             <button onclick="editProduct(${p.id})">Editar</button>
             <button onclick="deleteProduct(${p.id})">Eliminar</button>
@@ -877,7 +913,7 @@ async function loadAdminProducts() {
     html += '</tbody></table></div>';
     container.innerHTML = html;
   } catch (error) {
-    container.innerHTML = `<p>Error: ${error.message}</p>`;
+    container.innerHTML = `<p>Error: ${escapeHtml(error.message)}</p>`;
   }
 }
 
