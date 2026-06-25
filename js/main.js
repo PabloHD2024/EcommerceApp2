@@ -560,81 +560,6 @@ async function applyCoupon() {
   }
 }
 
-function renderCart() {
-  const container = document.getElementById('cart-items');
-  if (!container) return;
-
-  const cart = getCart();
-
-  if (cart.length === 0) {
-    container.innerHTML = '<p class="empty-cart">Tu carrito está vacío</p>';
-    document.getElementById('cart-total').textContent = '$0';
-    return;
-  }
-
-  let total = 0;
-  container.innerHTML = '';
-
-  cart.forEach((item, index) => {
-    const subtotal = item.price * item.quantity;
-    total += subtotal;
-
-    const itemDiv = document.createElement('div');
-    itemDiv.className = 'cart-item';
-    itemDiv.innerHTML = `
-      <img src="${item.image}" alt="${item.name}" onerror="this.src='../img/placeholder.png'">
-      <div class="item-info">
-        <h3>${item.name}</h3>
-        <p>$${item.price.toLocaleString('es-AR')} c/u</p>
-      </div>
-      <div class="item-controls">
-        <button class="btn-qty" data-index="${index}" data-change="-1">-</button>
-        <span>${item.quantity}</span>
-        <button class="btn-qty" data-index="${index}" data-change="1">+</button>
-        <p class="item-subtotal">$${subtotal.toLocaleString('es-AR')}</p>
-      </div>
-      <button class="btn-remove" data-index="${index}"><i class="fa-solid fa-trash"></i></button>
-    `;
-    container.appendChild(itemDiv);
-  });
-
-  // Renderizar total normal
-  document.getElementById('cart-total').textContent = `$${total.toLocaleString('es-AR')}`;
-
-  // OPTATIVO/RECOMENDADO: Si el usuario modifica el carrito, limpiamos cupones previos para evitar desfases de precio
-  sessionStorage.removeItem('cuponAplicado');
-  sessionStorage.removeItem('montoConDescuento');
-
-  // Eventos
-  document.querySelectorAll('.btn-qty').forEach((btn) => {
-    btn.replaceWith(btn.cloneNode(true)); // Limpia listeners previos redundantes
-  });
-  
-  document.querySelectorAll('.btn-qty').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      const idx = parseInt(btn.dataset.index);
-      const change = parseInt(btn.dataset.change);
-      let cart = getCart();
-      if (cart[idx]) {
-        const newQty = cart[idx].quantity + change;
-        if (newQty <= 0) cart.splice(idx, 1);
-        else cart[idx].quantity = newQty;
-        saveCart(cart);
-        renderCart();
-      }
-    });
-  });
-
-  document.querySelectorAll('.btn-remove').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      let cart = getCart();
-      cart.splice(parseInt(btn.dataset.index), 1);
-      saveCart(cart);
-      renderCart();
-    });
-  });
-}
-
 async function checkout() {
   // Verificar si el usuario está logueado
   const token = localStorage.getItem('token');
@@ -667,7 +592,7 @@ async function checkout() {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      throw new Error(data.mensaje || 'Error en checkout');
+      throw new Error(data.mensaje || data.message || 'Error en checkout');
     }
 
     const totalFinal = Number(data.total || total);
@@ -678,7 +603,9 @@ async function checkout() {
     renderCart();
     window.location.href = '/index.html';
   } catch (error) {
-    showNotification(error.message || 'Error al procesar compra', 'error');
+    const message = error.message || 'Error al procesar compra';
+    showNotification(message, 'error');
+    alert(message);
   }
 }
 
