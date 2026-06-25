@@ -223,16 +223,18 @@ JWT_SECRET=clave_local_para_desarrollo
 
 ### 5. Crear o actualizar la base de datos local
 
-Ejecutar el seed para crear la base SQLite local y cargar los productos iniciales:
-
-```bash
-node seed_DB.js
-```
-
-Si se desea cargar o actualizar los cupones iniciales:
+Ejecutar los seeds para crear o actualizar la base SQLite local y cargar cupones, productos y usuarios de prueba:
 
 ```bash
 node seed_Cupones_DB.js
+node seed_DB.js
+node seed_Users_DB.js
+```
+
+También se puede correr el flujo completo con:
+
+```bash
+npm run seed:all
 ```
 
 Estos pasos son necesarios cuando se clona el proyecto por primera vez, cuando se borra `ecommerce.sqlite`, o cuando se actualizan datos/modelos relacionados con la base.
@@ -431,6 +433,7 @@ POST /api/checkout
 ```
 
 Endpoint básico para simular una compra desde el carrito. El backend valida productos vigentes y stock disponible antes de confirmar la operación.
+Requiere token de usuario autenticado en el header `Authorization: Bearer TOKEN`.
 
 ---
 
@@ -498,8 +501,8 @@ Invoke-RestMethod http://localhost:3000/api/categorias
 ### Probar cupones
 
 ```powershell
-Invoke-RestMethod http://localhost:3000/api/cupones/validar/1
-Invoke-RestMethod "http://localhost:3000/api/cupones/aplicar/1?monto=10000"
+Invoke-RestMethod http://localhost:3000/api/cupones/validar/BIENVENIDA10
+Invoke-RestMethod "http://localhost:3000/api/cupones/aplicar/BIENVENIDA10?monto=10000"
 ```
 
 ---

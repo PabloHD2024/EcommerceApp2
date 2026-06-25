@@ -4,8 +4,6 @@ const router = express.Router();
 const productosController = require("../controllers/productosController");
 const { authenticateToken, isAdmin } = require("../middlewares/authMiddleware");
 
-console.log("Controlador cargado:", Object.keys(productosController));
-
 // Rutas públicas
 router.get("/", productosController.getAll);
 router.get("/:id", productosController.getById);

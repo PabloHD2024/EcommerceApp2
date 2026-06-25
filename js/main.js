@@ -34,9 +34,34 @@ function getCart() {
   return JSON.parse(localStorage.getItem('cart')) || [];
 }
 
-function saveCart(cart) {
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[char]);
+}
+
+function clearAppliedCoupon() {
+  sessionStorage.removeItem('cuponAplicado');
+  sessionStorage.removeItem('montoConDescuento');
+
+  const couponMessage = document.getElementById('coupon-message');
+  if (couponMessage) {
+    couponMessage.textContent = '';
+    couponMessage.className = 'coupon-message';
+  }
+}
+
+function saveCart(cart, options = {}) {
   localStorage.setItem('cart', JSON.stringify(cart));
   updateCartCount();
+
+  if (options.clearCoupon !== false) {
+    clearAppliedCoupon();
+  }
 }
 
 function updateCartCount() {
@@ -159,12 +184,14 @@ function displayFilteredProducts(products) {
 
   filtered.forEach((product) => {
     const nombre = product.name || product.nombre;
-    const precio = product.price || product.precio;
+    const precio = Number(product.price || product.precio || 0);
     const imagen = product.image || product.imagen || '/img/placeholder.png';
     const stock = Number(product.stock) || 0;
     const sinStock = stock <= 0;
     const rating = Number(product.rating) || 4;
     const reviews = product.reviews || 0;
+    const nombreSeguro = escapeHtml(nombre);
+    const imagenSegura = escapeHtml(imagen);
 
     // Generar estrellas
     let starsHTML = '';
@@ -182,16 +209,16 @@ function displayFilteredProducts(products) {
     card.className = `product-card ${sinStock ? 'out-of-stock' : ''}`;
     card.innerHTML = `
       <div class="product-image">
-        <img src="${imagen}" alt="${nombre}" onerror="this.src='/img/placeholder.png'">
+        <img src="${imagenSegura}" alt="${nombreSeguro}" onerror="this.src='/img/placeholder.png'">
       </div>
-      <h3>${nombre}</h3>
+      <h3>${nombreSeguro}</h3>
       <div class="rating">${starsHTML} <span>(${reviews})</span></div>
       <p class="price">$${precio.toLocaleString('es-AR')}</p>
       <div class="stock-info">
         ${sinStock ? '<span class="sin-stock">Sin stock</span>' : `<span class="con-stock">Stock: ${stock}</span>`}
       </div>
-      <button class="btn-add" data-id="${product.id}" data-name="${nombre}" 
-              data-price="${precio}" data-image="${imagen}" data-stock="${stock}" ${sinStock ? 'disabled' : ''}>
+      <button class="btn-add" data-id="${escapeHtml(product.id)}" data-name="${nombreSeguro}"
+              data-price="${precio}" data-image="${imagenSegura}" data-stock="${stock}" ${sinStock ? 'disabled' : ''}>
         <i class="fa-solid fa-cart-plus"></i> ${sinStock ? 'Agotado' : 'Añadir'}
       </button>
     `;
@@ -345,7 +372,7 @@ async function loadProductsPage(page = 1) {
   } catch (error) {
     console.error('Error:', error);
     if (currentProductsPage === 1) {
-      productsList.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+      productsList.innerHTML = `<p class="error">Error: ${escapeHtml(error.message)}</p>`;
     }
     renderProductsPagination(null);
   } finally {
@@ -366,20 +393,22 @@ async function loadFeaturedProducts() {
     container.innerHTML = '';
     destacados.forEach((product) => {
       const nombre = product.name || product.nombre;
-      const precio = product.price || product.precio;
+      const precio = Number(product.price || product.precio || 0);
       const imagen = product.image || product.imagen || 'img/placeholder.png';
       const stock = Number(product.stock) || 0;
+      const nombreSeguro = escapeHtml(nombre);
+      const imagenSegura = escapeHtml(imagen);
 
       const card = document.createElement('div');
       card.className = 'product-card';
       card.innerHTML = `
         <div class="product-image">
-          <img src="${imagen}" alt="${nombre}" onerror="this.src='img/placeholder.png'">
+          <img src="${imagenSegura}" alt="${nombreSeguro}" onerror="this.src='img/placeholder.png'">
         </div>
-        <h3>${nombre}</h3>
+        <h3>${nombreSeguro}</h3>
         <p class="price">$${precio.toLocaleString('es-AR')}</p>
-        <button class="btn-add" data-id="${product.id}" data-name="${nombre}" 
-                data-price="${precio}" data-image="${imagen}" data-stock="${stock}" ${stock <= 0 ? 'disabled' : ''}>
+        <button class="btn-add" data-id="${escapeHtml(product.id)}" data-name="${nombreSeguro}"
+                data-price="${precio}" data-image="${imagenSegura}" data-stock="${stock}" ${stock <= 0 ? 'disabled' : ''}>
           <i class="fa-solid fa-cart-plus"></i> ${stock <= 0 ? 'Agotado' : 'Comprar'}
         </button>
       `;
@@ -408,20 +437,24 @@ function renderCart() {
   container.innerHTML = '';
 
   cart.forEach((item, index) => {
-    const subtotal = item.price * item.quantity;
+    const itemName = escapeHtml(item.name);
+    const itemImage = escapeHtml(item.image || '../img/placeholder.png');
+    const itemPrice = Number(item.price) || 0;
+    const itemQuantity = Number(item.quantity) || 0;
+    const subtotal = itemPrice * itemQuantity;
     total += subtotal;
 
     const itemDiv = document.createElement('div');
     itemDiv.className = 'cart-item';
     itemDiv.innerHTML = `
-      <img src="${item.image}" alt="${item.name}" onerror="this.src='../img/placeholder.png'">
+      <img src="${itemImage}" alt="${itemName}" onerror="this.src='../img/placeholder.png'">
       <div class="item-info">
-        <h3>${item.name}</h3>
-        <p>$${item.price.toLocaleString('es-AR')} c/u</p>
+        <h3>${itemName}</h3>
+        <p>$${itemPrice.toLocaleString('es-AR')} c/u</p>
       </div>
       <div class="item-controls">
         <button class="btn-qty" data-index="${index}" data-change="-1">-</button>
-        <span>${item.quantity}</span>
+        <span>${itemQuantity}</span>
         <button class="btn-qty" data-index="${index}" data-change="1">+</button>
         <p class="item-subtotal">$${subtotal.toLocaleString('es-AR')}</p>
       </div>
@@ -475,6 +508,7 @@ async function applyCoupon() {
 
   const code = couponInput.value.trim().toUpperCase();
   if (!code) {
+    clearAppliedCoupon();
     couponMessage.textContent = 'Por favor ingresa un código de cupón';
     couponMessage.className = 'coupon-message error';
     return;
@@ -484,6 +518,7 @@ async function applyCoupon() {
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   if (total === 0) {
+    clearAppliedCoupon();
     couponMessage.textContent = 'Tu carrito está vacío';
     couponMessage.className = 'coupon-message error';
     return;
@@ -494,6 +529,7 @@ async function applyCoupon() {
     const data = await response.json();
 
     if (!response.ok) {
+      clearAppliedCoupon();
       couponMessage.textContent = data.mensaje || 'Cupón inválido';
       couponMessage.className = 'coupon-message error';
       return;
@@ -518,6 +554,7 @@ async function applyCoupon() {
     sessionStorage.setItem('cuponAplicado', code);
     sessionStorage.setItem('montoConDescuento', montoFinal);
   } catch (error) {
+    clearAppliedCoupon();
     couponMessage.textContent = 'Error al validar cupón: ' + error.message;
     couponMessage.className = 'coupon-message error';
   }
@@ -614,39 +651,34 @@ async function checkout() {
     return;
   }
 
-  // Calcular total base
   let total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  
-  // CORRECCIÓN: Validar el descuento usando sessionStorage en lugar de descuentoActivo
-  const montoConDescuento = sessionStorage.getItem('montoConDescuento');
-  if (montoConDescuento) {
-    total = parseFloat(montoConDescuento);
-  }
+  const cuponAplicado = sessionStorage.getItem('cuponAplicado') || null;
 
   try {
-    // Enviamos el token en los headers para que el Backend también lo valide de forma segura
     const response = await fetch('/api/checkout', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}` 
       },
-      body: JSON.stringify({ carrito: cart, total }),
+      body: JSON.stringify({ carrito: cart, total, cupon_aplicado: cuponAplicado }),
     });
 
-    if (!response.ok) throw new Error('Error en checkout');
+    const data = await response.json().catch(() => ({}));
 
-    alert(`¡Compra realizada! Total: $${total.toLocaleString('es-AR')}`);
-    
-    // CORRECCIÓN: Limpiar cupones de la sesión tras la compra exitosa
-    sessionStorage.removeItem('cuponAplicado');
-    sessionStorage.removeItem('montoConDescuento');
-    
+    if (!response.ok) {
+      throw new Error(data.mensaje || 'Error en checkout');
+    }
+
+    const totalFinal = Number(data.total || total);
+
+    alert(`¡Compra realizada! Total: $${totalFinal.toLocaleString('es-AR')}`);
+    clearAppliedCoupon();
     saveCart([]);
     renderCart();
     window.location.href = '/index.html';
   } catch (error) {
-    showNotification('Error al procesar compra', 'error');
+    showNotification(error.message || 'Error al procesar compra', 'error');
   }
 }
 
@@ -859,13 +891,13 @@ async function loadAdminProducts() {
 
     products.forEach((p) => {
       const nombre = p.name || p.nombre;
-      const precio = p.price || p.precio;
+      const precio = Number(p.price || p.precio || 0);
       html += `
         <tr>
-          <td>${p.id}</td>
-          <td>${nombre}</td>
+          <td>${escapeHtml(p.id)}</td>
+          <td>${escapeHtml(nombre)}</td>
           <td>$${precio}</td>
-          <td>${p.stock}</td>
+          <td>${escapeHtml(p.stock)}</td>
           <td>
             <button onclick="editProduct(${p.id})">Editar</button>
             <button onclick="deleteProduct(${p.id})">Eliminar</button>
@@ -877,7 +909,7 @@ async function loadAdminProducts() {
     html += '</tbody></table></div>';
     container.innerHTML = html;
   } catch (error) {
-    container.innerHTML = `<p>Error: ${error.message}</p>`;
+    container.innerHTML = `<p>Error: ${escapeHtml(error.message)}</p>`;
   }
 }
 

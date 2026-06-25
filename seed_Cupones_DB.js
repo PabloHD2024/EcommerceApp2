@@ -60,12 +60,15 @@ async function seedDatabaseCupones() {
     console.log("Tabla de cupones sincronizada sin borrar datos existentes.");
 
     for (const cupon of cuponesIniciales) {
-      const [, created] = await Cupon.findOrCreate({
-        where: { codigo: cupon.codigo },
-        defaults: cupon,
-      });
+      const existente = await Cupon.findOne({ where: { codigo: cupon.codigo } });
 
-      console.log(created ? `Cupón creado: ${cupon.codigo}` : `Cupón ya existía: ${cupon.codigo}`);
+      if (existente) {
+        await existente.update(cupon);
+        console.log(`Cupón actualizado: ${cupon.codigo}`);
+      } else {
+        await Cupon.create(cupon);
+        console.log(`Cupón creado: ${cupon.codigo}`);
+      }
     }
 
     console.log("¡Cupones iniciales cargados con éxito!");
