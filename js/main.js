@@ -55,6 +55,62 @@ function clearAppliedCoupon() {
   }
 }
 
+function showPurchaseConfirmation(data, cart) {
+  let modal = document.getElementById('purchase-confirmation-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'purchase-confirmation-modal';
+    modal.className = 'purchase-modal-overlay';
+    document.body.appendChild(modal);
+  }
+
+  const totalFinal = Number(data.total || 0);
+  const totalOriginal = Number(data.total_original || totalFinal);
+  const cupon = data.cupon_aplicado;
+  const totalItems = cart.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  const orderCode = `ORD-${Date.now().toString().slice(-8)}`;
+
+  modal.innerHTML = `
+    <div class="purchase-modal" role="dialog" aria-modal="true" aria-labelledby="purchase-title">
+      <div class="purchase-modal-icon"><i class="fa-solid fa-check"></i></div>
+      <h2 id="purchase-title">Compra confirmada</h2>
+      <p class="purchase-modal-copy">
+        Te enviaremos la información de la compra al email registrado. Si tenés WhatsApp asociado al teléfono, también podremos contactarte por ese medio.
+      </p>
+      <div class="purchase-summary">
+        <div><span>Orden</span><strong>${orderCode}</strong></div>
+        <div><span>Productos</span><strong>${totalItems}</strong></div>
+        <div><span>Total</span><strong>$${totalFinal.toLocaleString('es-AR')}</strong></div>
+        ${
+          cupon
+            ? `<div><span>Cupón</span><strong>${escapeHtml(cupon.codigo)} (${Number(cupon.descuento)}% OFF)</strong></div>`
+            : ''
+        }
+        ${
+          totalOriginal > totalFinal
+            ? `<div><span>Ahorro</span><strong>$${(totalOriginal - totalFinal).toLocaleString('es-AR')}</strong></div>`
+            : ''
+        }
+      </div>
+      <div class="purchase-modal-actions">
+        <button type="button" class="btn-buy" id="purchase-home">Ir al inicio</button>
+        <button type="button" class="btn-empty" id="purchase-continue">Seguir comprando</button>
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('active');
+  document.body.classList.add('modal-open');
+
+  document.getElementById('purchase-home')?.addEventListener('click', () => {
+    window.location.href = '/index.html';
+  });
+
+  document.getElementById('purchase-continue')?.addEventListener('click', () => {
+    window.location.href = '/html/productos.html';
+  });
+}
+
 function saveCart(cart, options = {}) {
   localStorage.setItem('cart', JSON.stringify(cart));
   updateCartCount();
@@ -578,6 +634,12 @@ async function checkout() {
 
   let total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const cuponAplicado = sessionStorage.getItem('cuponAplicado') || null;
+  const checkoutButton = document.getElementById('btn-checkout');
+
+  if (checkoutButton) {
+    checkoutButton.disabled = true;
+    checkoutButton.textContent = 'Procesando...';
+  }
 
   try {
     const response = await fetch('/api/checkout', {
@@ -595,17 +657,19 @@ async function checkout() {
       throw new Error(data.mensaje || data.message || 'Error en checkout');
     }
 
-    const totalFinal = Number(data.total || total);
-
-    alert(`¡Compra realizada! Total: $${totalFinal.toLocaleString('es-AR')}`);
     clearAppliedCoupon();
     saveCart([]);
     renderCart();
-    window.location.href = '/index.html';
+    showPurchaseConfirmation(data, cart);
   } catch (error) {
     const message = error.message || 'Error al procesar compra';
     showNotification(message, 'error');
     alert(message);
+  } finally {
+    if (checkoutButton) {
+      checkoutButton.disabled = false;
+      checkoutButton.textContent = 'Finalizar Pago';
+    }
   }
 }
 
@@ -633,6 +697,13 @@ function switchAuth(view) {
 function initAuthForms() {
   const loginForm = document.getElementById('form-login');
   const registerForm = document.getElementById('form-register');
+  const phoneInput = document.getElementById('reg-telefono');
+
+  if (phoneInput) {
+    phoneInput.addEventListener('input', () => {
+      phoneInput.value = phoneInput.value.replace(/\D/g, '');
+    });
+  }
 
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
@@ -683,11 +754,17 @@ function initAuthForms() {
       e.preventDefault();
       const name = document.getElementById('reg-name')?.value;
       const email = document.getElementById('reg-email')?.value;
+      const telefono = document.getElementById('reg-telefono')?.value;
       const password = document.getElementById('reg-password')?.value;
       const terms = document.getElementById('reg-terms')?.checked;
 
-      if (!name || !email || !password) {
+      if (!name || !email || !telefono || !password) {
         showNotification('Completa todos los campos', 'error');
+        return;
+      }
+
+      if (!/^[0-9]+$/.test(telefono)) {
+        showNotification('El teléfono debe contener solo números', 'error');
         return;
       }
 
@@ -700,7 +777,7 @@ function initAuthForms() {
         const response = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, password }),
+          body: JSON.stringify({ name, email, telefono, password }),
         });
 
         const data = await response.json();

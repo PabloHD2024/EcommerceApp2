@@ -52,6 +52,7 @@ const authController = {
                     id: user.id,
                     name: user.name,
                     email: user.email,
+                    telefono: user.telefono,
                     role: user.role
                 }
             });
@@ -69,10 +70,14 @@ const authController = {
 
     register: async (req, res) => {
         try {
-            const { name, email, password } = req.body;
+            const { name, email, password, telefono } = req.body;
 
-            if (!name || !email || !password) {
+            if (!name || !email || !password || !telefono) {
                 return res.status(400).json({ success: false, message: "Todos los campos son obligatorios" });
+            }
+
+            if (!/^[0-9]+$/.test(String(telefono))) {
+                return res.status(400).json({ success: false, message: "El teléfono debe contener solo números" });
             }
 
             // Validar si el email ya existe
@@ -87,6 +92,7 @@ const authController = {
                 name,
                 email,
                 password,
+                telefono,
                 role: "client"
             });
 

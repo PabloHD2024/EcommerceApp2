@@ -7,6 +7,7 @@ const usuariosIniciales = [
   {
     name: 'Administrador de pruebas',
     email: 'admin@example.com',
+    telefono: '1122334455',
     password: '123456',
     role: 'admin',
     carrito: '[]',
@@ -14,6 +15,7 @@ const usuariosIniciales = [
   {
     name: 'Cliente de pruebas',
     email: 'cliente@example.com',
+    telefono: '1199887766',
     password: '123456',
     role: 'client',
     carrito: '[]',
