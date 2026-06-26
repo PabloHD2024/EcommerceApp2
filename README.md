@@ -2,190 +2,146 @@
 
 Proyecto grupal desarrollado para la materia **Prácticas Profesionalizantes 2** del IFTS 16.
 
-El objetivo del proyecto es construir una aplicación de e-commerce utilizando **Node.js**, **Express**, **Sequelize** y **SQLite**, con una estructura backend organizada bajo el patrón **MVC**.
-
----
-
-## Descripción del proyecto
-
-EcommerceApp2 es una aplicación web de tienda online que permite trabajar con distintas entidades propias de un sistema de ventas, como productos, categorías, clientes, pedidos, detalles de pedido, tickets y cupones.
-
-El proyecto implementa una **API REST** para manejar datos desde el backend y utiliza **Sequelize + SQLite** para la persistencia local. Además, incorpora una capa de **seguridad** basada en autenticación con JWT y autorización por rol, permitiendo distinguir usuarios administradores y clientes.
-
-La aplicación permite listar productos públicamente, pero restringe acciones sensibles como crear, modificar o eliminar productos a usuarios autenticados con rol de administrador.
+EcommerceApp2 es una aplicación web de tienda online construida con **Node.js**, **Express**, **Sequelize** y **SQLite**. El backend expone una **API REST** organizada con patrón **MVC**, sirve el frontend estático y aplica seguridad con **JWT**, roles de usuario y contraseñas hasheadas con **bcryptjs**.
 
 ---
 
 ## Tecnologías utilizadas
 
-- HTML
-- CSS
-- JavaScript
-- Node.js
-- Express.js
-- Sequelize
-- SQLite
-- dotenv
-- cors
-- jsonwebtoken
-- bcryptjs
-- Git
-- GitHub
-- Thunder Client / Postman para pruebas de API
-- ChatGPT / GEMINI / DeepSeek / codex
+### Stack principal
+
+| JavaScript | Node.js | Express | Sequelize | SQLite | JWT | HTML5 | CSS3 |
+|---|---|---|---|---|---|---|---|
+| ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=000) | ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=fff) | ![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=fff) | ![Sequelize](https://img.shields.io/badge/Sequelize-52B0E7?style=for-the-badge&logo=sequelize&logoColor=fff) | ![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=fff) | ![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=fff) | ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=fff) | ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=fff) |
+
+### Herramientas de desarrollo
+
+| Git | GitHub | VS Code | Postman |
+|---|---|---|---|
+| ![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=fff) | ![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=fff) | ![VS Code](https://img.shields.io/badge/VS_Code-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=fff) | ![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=fff) |
+
+### Librerías y herramientas implementadas
+
+`express` · `sequelize` · `sqlite3` · `dotenv` · `cors` · `jsonwebtoken` · `bcryptjs` · `Thunder Client/Postman` · `Git/GitHub` · `VS Code`
 
 ---
 
-## Arquitectura del proyecto
+## Descripción del proyecto
 
-El proyecto utiliza una organización basada en el patrón **MVC**.
+La aplicación permite trabajar con entidades típicas de un e-commerce:
 
-### Models
+- Productos con precio, stock, imagen, categoría, rating, reviews y fechas de vigencia.
+- Categorías generadas a partir de los productos cargados.
+- Usuarios con registro, login, rol y carrito persistido.
+- Clientes, pedidos, detalles de pedido y tickets.
+- Cupones con código, porcentaje de descuento, vencimiento, stock de usos y estado activo.
+- Checkout con validación de carrito, stock, vigencia de productos y aplicación de cupones.
 
-Los modelos representan las entidades principales del sistema y se encuentran en:
-
-`src/models/`
-
-Modelos actuales:
-
-- `Producto.js`
-- `Cliente.js`
-- `Cupon.js`
-- `Pedido.js`
-- `DetallePedido.js`
-- `Ticket.js`
-- `User.js`
-- `cart.js`
-
-El modelo `User.js` permite persistir usuarios con email, contraseña hasheada y rol.
-
-### Controllers
-
-Los controladores contienen la lógica de cada recurso. Reciben la petición, procesan los datos y devuelven una respuesta en formato JSON.
-
-Se encuentran en:
-
-`src/controllers/`
-
-Controladores actuales:
-
-- `productosController.js`
-- `categoriasController.js`
-- `clientesController.js`
-- `cuponController.js`
-- `pedidoController.js`
-- `detallePedidoController.js`
-- `ticketsController.js`
-- `authController.js`
-
-### Routes
-
-Las rutas definen los endpoints de la API y conectan cada URL con su controlador correspondiente.
-
-Se encuentran en:
-
-`src/routes/`
-
-Rutas actuales:
-
-- `productosRoutes.js`
-- `categoriasRoutes.js`
-- `clientesRoutes.js`
-- `cuponRoutes.js`
-- `pedidoRoutes.js`
-- `detallePedidoRoutes.js`
-- `ticketsRoutes.js`
-- `authRoutes.js`
-
-### Middlewares
-
-Los middlewares permiten interceptar una petición antes de que llegue al controlador.
-
-Se encuentran en:
-
-`src/middlewares/`
-
-Middlewares actuales:
-
-- `authMiddleware.js`
-
-Este archivo contiene:
-
-- `authenticateToken`: valida que la petición tenga un token JWT válido.
-- `isAdmin`: valida que el usuario autenticado tenga rol de administrador.
-
-### Config
-
-La configuración de la base de datos se encuentra en:
-
-`src/config/database.js`
-
-La conexión utiliza variables de entorno definidas en el archivo `.env`.
-
-Ejemplo de `.env`:
-
-```env
-PORT=3000
-DB_DIALECT=sqlite
-DB_STORAGE=./ecommerce.sqlite
-JWT_SECRET=clave_local_para_desarrollo
-```
-
-Importante: el archivo `.env` no debe subirse al repositorio. La variable `JWT_SECRET` se utiliza para firmar y validar los tokens JWT.
+El frontend se sirve desde Express y debe abrirse desde `http://localhost:3000` para que pueda comunicarse correctamente con la API.
 
 ---
 
-## Estructura del proyecto
+## Arquitectura
+
+El proyecto sigue una organización basada en **MVC**:
+
+- `src/models/`: define las entidades Sequelize y sus validaciones.
+- `src/controllers/`: contiene la lógica de negocio de cada recurso.
+- `src/routes/`: conecta los endpoints HTTP con sus controladores.
+- `src/middlewares/`: centraliza autenticación y autorización.
+- `src/config/`: contiene la configuración de base de datos.
+- `src/utils/`: contiene utilidades compartidas, como paginación.
+
+La base local se maneja con **SQLite** mediante **Sequelize**. La configuración se toma desde `.env`.
+
+---
+
+## Estructura general del proyecto
 
 ```text
 EcommerceApp2/
-├── css/
-├── html/
-├── img/
-├── js/
-├── src/
-│   ├── config/
-│   │   └── database.js
-│   ├── controllers/
-│   │   ├── authController.js
-│   │   ├── categoriasController.js
-│   │   ├── clientesController.js
-│   │   ├── cuponController.js
-│   │   ├── detallePedidoController.js
-│   │   ├── pedidoController.js
-│   │   ├── productosController.js
-│   │   └── ticketsController.js
-│   ├── data/
-│   ├── middlewares/
-│   │   └── authMiddleware.js
-│   ├── models/
-│   │   ├── cart.js
-│   │   ├── Categoria.js
-│   │   ├── Cliente.js
-│   │   ├── Cupon.js
-│   │   ├── DetallePedido.js
-│   │   ├── Pedido.js
-│   │   ├── Producto.js
-│   │   ├── Ticket.js
-│   │   └── User.js
-│   └── routes/
-│       ├── authRoutes.js
-│       ├── categoriasRoutes.js
-│       ├── clientesRoutes.js
-│       ├── cuponRoutes.js
-│       ├── detallePedidoRoutes.js
-│       ├── pedidoRoutes.js
-│       ├── productosRoutes.js
-│       └── ticketsRoutes.js
-├── index.html
-├── package.json
-├── package-lock.json
-├── seed_DB.js
-├── seed_Cupones_DB.js
-├── server.js
-├── .env
-├── .gitignore
-└── README.md
+|-- css/
+|   |-- styles.css
+|   `-- styles-corregido.css
+|-- data/
+|   `-- productos.json
+|-- html/
+|   |-- admin.html
+|   |-- admin copy.html
+|   |-- cart.html
+|   |-- contacto.html
+|   |-- login.html
+|   `-- productos.html
+|-- img/
+|   |-- AuricularesBluetooth.png
+|   |-- CafeteraExpress.png
+|   |-- DiscoExterno1TB.png
+|   |-- SmartTV43.png
+|   `-- ...
+|-- js/
+|   `-- main.js
+|-- src/
+|   |-- config/
+|   |   `-- database.js
+|   |-- controllers/
+|   |   |-- authController.js
+|   |   |-- categoriasController.js
+|   |   |-- clientesController.js
+|   |   |-- cuponController.js
+|   |   |-- detallePedidoController.js
+|   |   |-- pedidoController.js
+|   |   |-- productosController.js
+|   |   |-- ticketsController.js
+|   |   `-- usuariosController.js
+|   |-- data/
+|   |   |-- categoriasData.js
+|   |   |-- cuponData.js
+|   |   |-- detallePedidoData.js
+|   |   |-- pedidoData.js
+|   |   |-- productos.json
+|   |   |-- productosData.js
+|   |   `-- ticketsData.js
+|   |-- middlewares/
+|   |   `-- authMiddleware.js
+|   |-- models/
+|   |   |-- cart.js
+|   |   |-- Categoria.js
+|   |   |-- Cliente.js
+|   |   |-- Cupon.js
+|   |   |-- DetallePedido.js
+|   |   |-- Pedido.js
+|   |   |-- Producto.js
+|   |   |-- Ticket.js
+|   |   `-- User.js
+|   |-- routes/
+|   |   |-- authRoutes.js
+|   |   |-- categoriasRoutes.js
+|   |   |-- clientesRoutes.js
+|   |   |-- cuponRoutes.js
+|   |   |-- detallePedidoRoutes.js
+|   |   |-- pedidoRoutes.js
+|   |   |-- productosRoutes.js
+|   |   |-- ticketsRoutes.js
+|   |   `-- usuariosRoutes.js
+|   `-- utils/
+|       `-- pagination.js
+|-- index.html
+|-- server.js
+|-- main-corregido.js
+|-- seed_DB.js
+|-- seed_Cupones_DB.js
+|-- seed_Users_DB.js
+|-- package.json
+|-- package-lock.json
+|-- ecommerce.sqlite.sql
+|-- check_categorias.js
+|-- check_productos.js
+|-- test_db.js
+|-- ver_productos.js
+|-- .env
+|-- .gitignore
+|-- agents.md
+`-- README.md
 ```
 
 ---
@@ -196,23 +152,18 @@ EcommerceApp2/
 
 ```bash
 git clone https://github.com/PabloHD2024/EcommerceApp2.git
-```
-
-### 2. Ingresar a la carpeta del proyecto
-
-```bash
 cd EcommerceApp2
 ```
 
-### 3. Instalar dependencias
+### 2. Instalar dependencias
 
 ```bash
 npm install
 ```
 
-### 4. Configurar variables de entorno
+### 3. Configurar variables de entorno
 
-Crear un archivo `.env` en la raíz del proyecto con el siguiente contenido:
+Crear un archivo `.env` en la raíz del proyecto:
 
 ```env
 PORT=3000
@@ -221,116 +172,65 @@ DB_STORAGE=./ecommerce.sqlite
 JWT_SECRET=clave_local_para_desarrollo
 ```
 
-### 5. Crear o actualizar la base de datos local
+El archivo `.env` no debe subirse al repositorio.
 
-Ejecutar los seeds para crear o actualizar la base SQLite local y cargar cupones, productos y usuarios de prueba:
+### 4. Crear o actualizar la base local
+
+Se pueden ejecutar los seeds por separado:
 
 ```bash
-node seed_Cupones_DB.js
-node seed_DB.js
-node seed_Users_DB.js
+npm run seed:coupons
+npm run seed
+npm run seed:users
 ```
 
-También se puede correr el flujo completo con:
+O correr el flujo completo:
 
 ```bash
 npm run seed:all
 ```
 
-Estos pasos son necesarios cuando se clona el proyecto por primera vez, cuando se borra `ecommerce.sqlite`, o cuando se actualizan datos/modelos relacionados con la base.
-
-### 6. Ejecutar el servidor
+### 5. Levantar el servidor
 
 ```bash
 npm start
 ```
 
-El servidor se ejecuta en:
+Servidor local:
 
-`http://localhost:3000`
+```text
+http://localhost:3000
+```
 
-Importante: la aplicación debe abrirse desde `http://localhost:3000`, no haciendo doble click sobre `index.html`, porque el frontend necesita comunicarse con la API del backend.
+Importante: abrir la aplicación desde `http://localhost:3000`, no haciendo doble click sobre `index.html`, porque el frontend necesita consumir la API del backend.
 
 ---
 
-## Seguridad: autenticación y autorización
-
-En la clase 10 se incorporó seguridad en la API mediante autenticación con JWT y autorización por rol.
-
-### Autenticación
-
-La autenticación responde a la pregunta: **¿quién sos?**
-
-El usuario inicia sesión enviando email y contraseña. Si las credenciales son correctas, el backend genera un token JWT firmado con `JWT_SECRET`.
-
-Endpoint de login:
-
-```http
-POST /api/auth/login
-```
-
-Body de ejemplo:
+## Scripts disponibles
 
 ```json
 {
-  "email": "admin@example.com",
-  "password": "123456"
+  "start": "node server.js",
+  "seed": "node seed_DB.js",
+  "seed:coupons": "node seed_Cupones_DB.js",
+  "seed:users": "node seed_Users_DB.js",
+  "seed:all": "node seed_Cupones_DB.js && node seed_DB.js && node seed_Users_DB.js"
 }
 ```
-
-Respuesta esperada:
-
-```json
-{
-  "success": true,
-  "token": "TOKEN_JWT",
-  "user": {
-    "id": 1,
-    "name": "Administrador",
-    "email": "admin@example.com",
-    "role": "admin"
-  }
-}
-```
-
-### Autorización
-
-La autorización responde a la pregunta: **¿qué puede hacer este usuario?**
-
-El sistema utiliza el campo `role` del usuario para permitir o rechazar acciones sensibles.
-
-Roles utilizados:
-
-- `admin`: puede crear, modificar y eliminar productos.
-- `client`: puede navegar el catálogo, pero no puede administrar productos.
-
-### Uso del token
-
-Para acceder a rutas protegidas se debe enviar el token JWT en el header `Authorization`.
-
-Formato esperado:
-
-```http
-Authorization: Bearer TOKEN
-```
-
-### Contraseñas
-
-Las contraseñas no se guardan en texto plano. Se procesan con `bcryptjs` antes de persistirse en la base de datos.
 
 ---
 
-## Endpoints disponibles
+## Seguridad
 
-## Autenticación
+La API utiliza autenticación con **JWT** y autorización por rol.
 
-```http
-POST /api/auth/login
-```
+- `authenticateToken`: valida el header `Authorization: Bearer TOKEN`.
+- `isAdmin`: permite ejecutar acciones sensibles solo a usuarios con rol `admin`.
+- Las contraseñas se guardan hasheadas con `bcryptjs`.
+- Roles disponibles: `admin` y `client`.
+- Los tokens de login vencen luego de `2h`.
 
-Permite iniciar sesión y obtener un token JWT.
-
-Usuarios de prueba:
+### Usuarios de prueba
 
 ```text
 Administrador:
@@ -344,227 +244,16 @@ password: 123456
 
 ---
 
-### Productos
+## Endpoints principales
+
+### Autenticación
 
 ```http
-GET /api/productos
-GET /api/productos/:id
-POST /api/productos
-PUT /api/productos/:id
-DELETE /api/productos/:id
+POST /api/auth/login
+POST /api/auth/register
 ```
 
-Las rutas de lectura son públicas:
-
-```http
-GET /api/productos
-GET /api/productos/:id
-```
-
-Las rutas de escritura están protegidas y requieren usuario administrador:
-
-```http
-POST /api/productos
-PUT /api/productos/:id
-DELETE /api/productos/:id
-```
-
-Ejemplo de body para crear producto:
-
-```json
-{
-  "nombre": "Teclado mecánico",
-  "precio": 75000,
-  "stock": 20,
-  "categoria": "Tecnología"
-}
-```
-
-Respuesta si se intenta crear un producto sin token:
-
-```json
-{
-  "message": "Acceso denegado. Token no provisto."
-}
-```
-
-Código HTTP esperado:
-
-```http
-401 Unauthorized
-```
-
-Respuesta si se intenta crear un producto con token válido pero sin rol administrador:
-
-```json
-{
-  "message": "Acceso denegado. Se requieren permisos de administrador."
-}
-```
-
-Código HTTP esperado:
-
-```http
-403 Forbidden
-```
-
----
-
-### Categorías
-
-```http
-GET /api/categorias
-```
-
-Este endpoint devuelve las categorías disponibles a partir de los productos cargados en la base de datos.
-
-Ejemplo de respuesta:
-
-```json
-["Computación", "Electrodomésticos", "Tecnología"]
-```
-
----
-
-### Checkout
-
-```http
-POST /api/checkout
-```
-
-Endpoint básico para simular una compra desde el carrito. El backend valida productos vigentes y stock disponible antes de confirmar la operación.
-Requiere token de usuario autenticado en el header `Authorization: Bearer TOKEN`.
-
----
-
-### Cupones
-
-```http
-GET /api/cupones/validar/:codigo
-GET /api/cupones/aplicar/:codigo?monto=10000
-```
-
-Estos endpoints permiten validar un cupón y calcular el descuento sobre un monto determinado.
-
----
-
-## Pruebas con PowerShell
-
-### Probar productos públicos
-
-```powershell
-Invoke-RestMethod http://localhost:3000/api/productos
-```
-
-Resultado esperado:
-
-```text
-200 OK
-```
-
-### Probar creación de producto sin token
-
-```powershell
-try {
-  Invoke-RestMethod `
-    -Uri http://localhost:3000/api/productos `
-    -Method POST `
-    -ContentType "application/json" `
-    -Body '{"nombre":"Producto Test","precio":1000,"stock":5,"categoria":"Test"}'
-} catch {
-  $_.Exception.Response.StatusCode.value__
-}
-```
-
-Resultado esperado:
-
-```text
-401
-```
-
-### Probar login de administrador
-
-```powershell
-Invoke-RestMethod `
-  -Uri http://localhost:3000/api/auth/login `
-  -Method POST `
-  -ContentType "application/json" `
-  -Body '{"email":"admin@example.com","password":"123456"}'
-```
-
-### Probar categorías
-
-```powershell
-Invoke-RestMethod http://localhost:3000/api/categorias
-```
-
-### Probar cupones
-
-```powershell
-Invoke-RestMethod http://localhost:3000/api/cupones/validar/BIENVENIDA10
-Invoke-RestMethod "http://localhost:3000/api/cupones/aplicar/BIENVENIDA10?monto=10000"
-```
-
----
-
-## Pruebas con Thunder Client
-
-### GET productos sin token
-
-```http
-GET http://localhost:3000/api/productos
-```
-
-Resultado esperado:
-
-```http
-200 OK
-```
-
-### POST producto sin token
-
-```http
-POST http://localhost:3000/api/productos
-```
-
-Header:
-
-```http
-Content-Type: application/json
-```
-
-Body:
-
-```json
-{
-  "nombre": "Producto Test Thunder",
-  "precio": 1000,
-  "stock": 5,
-  "categoria": "Test"
-}
-```
-
-Resultado esperado:
-
-```http
-401 Unauthorized
-```
-
-Respuesta esperada:
-
-```json
-{
-  "message": "Acceso denegado. Token no provisto."
-}
-```
-
-### Login administrador
-
-```http
-POST http://localhost:3000/api/auth/login
-```
-
-Body:
+Ejemplo de login:
 
 ```json
 {
@@ -573,99 +262,242 @@ Body:
 }
 ```
 
-Resultado esperado:
-
-```http
-200 OK
-```
-
-Luego copiar el token devuelto y enviarlo en las rutas protegidas.
-
-### POST producto con token administrador
-
-```http
-POST http://localhost:3000/api/productos
-```
-
-Headers:
-
-```http
-Content-Type: application/json
-Authorization: Bearer TOKEN_ADMIN
-```
-
-Body:
+Ejemplo de registro:
 
 ```json
 {
-  "nombre": "Producto Admin Thunder",
-  "precio": 2500,
-  "stock": 10,
-  "categoria": "Test"
+  "name": "Cliente Nuevo",
+  "email": "cliente.nuevo@example.com",
+  "password": "123456",
+  "telefono": "1122334455"
 }
 ```
 
-Resultado esperado:
+### Productos
 
 ```http
-201 Created
+GET    /api/productos
+GET    /api/productos/:id
+POST   /api/productos
+PUT    /api/productos/:id
+DELETE /api/productos/:id
 ```
 
-### POST producto con token cliente
+Lectura pública:
 
-Usar un token generado con el usuario `cliente@example.com`.
+- `GET /api/productos`
+- `GET /api/productos/:id`
 
-Resultado esperado:
+Escritura protegida para administradores:
+
+- `POST /api/productos`
+- `PUT /api/productos/:id`
+- `DELETE /api/productos/:id`
+
+Filtros y paginación:
 
 ```http
-403 Forbidden
+GET /api/productos?categoria=Tecnología&nombre=mouse&page=1&limit=6
+```
+
+### Categorías
+
+```http
+GET /api/categorias
+```
+
+Devuelve las categorías disponibles a partir de los productos.
+
+### Clientes y carrito
+
+```http
+POST /api/clientes/carrito
+GET  /api/clientes/carrito/recuperar
+```
+
+Estas rutas requieren usuario autenticado.
+
+Rutas administrativas:
+
+```http
+GET    /api/clientes
+GET    /api/clientes/:id
+POST   /api/clientes
+PUT    /api/clientes/:id
+DELETE /api/clientes/:id
+```
+
+### Usuarios
+
+Todas las rutas de usuarios requieren token y rol `admin`.
+
+```http
+GET    /api/usuarios
+GET    /api/usuarios/:id
+POST   /api/usuarios
+PUT    /api/usuarios/:id
+DELETE /api/usuarios/:id
+```
+
+### Cupones
+
+Rutas públicas para validar y calcular descuentos:
+
+```http
+GET /api/cupones/validar/:codigo
+GET /api/cupones/aplicar/:codigo?monto=10000
+```
+
+Rutas administrativas:
+
+```http
+GET    /api/cupones
+GET    /api/cupones/:id
+POST   /api/cupones
+POST   /api/cupones/:id/usar
+PUT    /api/cupones/:id
+DELETE /api/cupones/:id
+```
+
+### Checkout
+
+```http
+POST /api/checkout
+```
+
+Requiere usuario autenticado. Valida:
+
+- carrito no vacío;
+- productos existentes y vigentes;
+- stock disponible;
+- cupón aplicado, si corresponde;
+- descuento final y actualización de stock.
+
+### Pedidos, detalles y tickets
+
+Estas rutas se montan protegidas desde `server.js`, por lo que requieren token y rol `admin`.
+
+```http
+GET    /api/pedidos
+GET    /api/pedidos/:id
+POST   /api/pedidos
+PUT    /api/pedidos/:id
+DELETE /api/pedidos/:id
+```
+
+```http
+GET    /api/detalles-pedido
+GET    /api/detalles-pedido/pedido/:pedidoId
+GET    /api/detalles-pedido/:id
+POST   /api/detalles-pedido
+PUT    /api/detalles-pedido/:id
+DELETE /api/detalles-pedido/:id
+```
+
+```http
+GET    /api/tickets
+GET    /api/tickets/:id
+POST   /api/tickets
+PUT    /api/tickets/:id
+DELETE /api/tickets/:id
+```
+
+---
+
+## Paginación
+
+Los recursos que usan `src/utils/pagination.js` devuelven una respuesta con esta forma:
+
+```json
+{
+  "items": [],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "totalItems": 0,
+    "totalPages": 0,
+    "hasPreviousPage": false,
+    "hasNextPage": false
+  }
+}
+```
+
+Parámetros soportados:
+
+```http
+?page=1&limit=10
+```
+
+---
+
+## Pruebas rápidas con PowerShell
+
+### Productos públicos
+
+```powershell
+Invoke-RestMethod http://localhost:3000/api/productos
+```
+
+### Login administrador
+
+```powershell
+$login = Invoke-RestMethod `
+  -Uri http://localhost:3000/api/auth/login `
+  -Method POST `
+  -ContentType "application/json" `
+  -Body '{"email":"admin@example.com","password":"123456"}'
+
+$token = $login.token
+```
+
+### Crear producto con token administrador
+
+```powershell
+Invoke-RestMethod `
+  -Uri http://localhost:3000/api/productos `
+  -Method POST `
+  -Headers @{ Authorization = "Bearer $token" } `
+  -ContentType "application/json" `
+  -Body '{"nombre":"Producto Test","precio":1000,"stock":5,"categoria":"Test","image":"../img/placeholder.png","rating":4,"reviews":0}'
+```
+
+### Validar cupón
+
+```powershell
+Invoke-RestMethod http://localhost:3000/api/cupones/validar/BIENVENIDA10
+Invoke-RestMethod "http://localhost:3000/api/cupones/aplicar/BIENVENIDA10?monto=10000"
 ```
 
 ---
 
 ## Estado actual del proyecto
 
-Actualmente el proyecto cuenta con:
-
 - Servidor Express funcionando.
-- Frontend servido desde Express.
-- Conexión a base de datos SQLite mediante Sequelize.
-- Archivo `.env` para configuración local.
-- Archivo `.gitignore` configurado.
-- CRUD de productos conectado y funcionando.
-- Listado de categorías conectado mediante estructura MVC.
-- Endpoint básico de checkout.
-- Endpoints de validación y aplicación de cupones disponibles.
-- Estructura MVC creada para varias entidades del dominio.
-- Dependencias de seguridad agregadas: `jsonwebtoken` y `bcryptjs`.
-- Modelo de usuario para autenticación.
-- Login con email y contraseña.
-- Generación de token JWT.
-- Hash de contraseñas mediante `bcryptjs`.
-- Middleware de autenticación mediante JWT.
-- Middleware de autorización para rol administrador.
-- Rutas de creación, modificación y eliminación de productos protegidas.
-- Rutas de lectura de productos públicas.
-- Interfaz preparada para diferenciar usuario invitado, cliente y administrador.
+- Frontend estático servido desde Express.
+- Conexión SQLite mediante Sequelize.
+- Configuración por variables de entorno.
+- CRUD de productos con lectura pública y escritura protegida por admin.
+- Filtros y paginación para productos.
+- Categorías disponibles desde la API.
+- Registro y login de usuarios.
+- JWT con expiración y roles `admin`/`client`.
+- Hash de contraseñas con `bcryptjs`.
+- Persistencia de carrito por usuario autenticado.
+- CRUD administrativo de usuarios, clientes, cupones, pedidos, detalles y tickets.
+- Checkout con transacción, validación de stock, vigencia y cupones.
+- Seeds para productos, cupones y usuarios.
 
 ---
 
-## Próximos pasos
+## Próximos pasos sugeridos
 
-Posibles mejoras futuras:
-
-- Proteger rutas sensibles de categorías y cupones.
-- Definir permisos específicos para clientes, pedidos, tickets y checkout.
-- Completar la integración de todas las rutas MVC en `server.js`.
-- Unificar completamente todas las entidades bajo Sequelize.
-- Agregar relaciones entre modelos.
-- Relacionar pedidos con clientes.
-- Relacionar detalle de pedido con productos y pedidos.
-- Implementar validaciones más completas.
-- Agregar manejo de errores centralizado.
-- Mejorar el frontend para consumir todos los endpoints de la API.
-- Mejorar la interfaz según usuario logueado y rol.
-- Agregar pruebas automatizadas.
+- Agregar pruebas automatizadas para auth, productos, cupones y checkout.
+- Centralizar manejo de errores.
+- Completar relaciones Sequelize entre usuarios/clientes, pedidos, detalles y productos.
+- Revisar permisos específicos para cada módulo administrativo.
+- Documentar ejemplos de body para pedidos, detalles y tickets.
+- Mejorar validaciones de entrada en todos los controladores.
+- Unificar archivos de datos legacy con modelos Sequelize cuando ya no sean necesarios.
 
 ---
 
