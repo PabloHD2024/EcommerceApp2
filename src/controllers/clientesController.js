@@ -112,8 +112,23 @@ const clientesController = {
             const userId = req.user.id; 
             const { carrito } = req.body; // Array con los productos del carrito
 
-            if (!carrito) {
-                return res.status(400).json({ success: false, message: "El carrito está vacío o no fue enviado." });
+            if (!Array.isArray(carrito)) {
+                return res.status(400).json({ success: false, message: "El carrito debe enviarse como un array." });
+            }
+
+            const carritoValido = carrito.every((item) => {
+                const idProducto = Number(item && item.id);
+                const cantidad = Number(item && item.quantity);
+
+                return Number.isInteger(idProducto) && idProducto > 0
+                    && Number.isInteger(cantidad) && cantidad > 0;
+            });
+
+            if (!carritoValido) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Cada ítem del carrito debe tener id y quantity válidos."
+                });
             }
 
             // Actualizamos la columna 'carrito' convirtiendo el array a string de texto JSON
@@ -144,7 +159,16 @@ const clientesController = {
             }
 
             // Si hay un carrito guardado lo parseamos a Array, sino devolvemos un array vacío []
-            const carritoGuardado = usuario.carrito ? JSON.parse(usuario.carrito) : [];
+            let carritoGuardado = [];
+
+            if (usuario.carrito) {
+                try {
+                    const parsedCart = JSON.parse(usuario.carrito);
+                    carritoGuardado = Array.isArray(parsedCart) ? parsedCart : [];
+                } catch (error) {
+                    carritoGuardado = [];
+                }
+            }
 
             return res.json({ success: true, carrito: carritoGuardado });
         } catch (error) {

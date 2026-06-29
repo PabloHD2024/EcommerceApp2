@@ -13,8 +13,20 @@ const productosController = {
       const today = new Date();
 
       const whereCondition = {
-        validFrom: { [Op.lte]: today },
-        validTo: { [Op.gte]: today },
+        [Op.and]: [
+          {
+            [Op.or]: [
+              { validFrom: null },
+              { validFrom: { [Op.lte]: today } },
+            ],
+          },
+          {
+            [Op.or]: [
+              { validTo: null },
+              { validTo: { [Op.gte]: today } },
+            ],
+          },
+        ],
       };
 
       if (categoria && categoria.trim()) {
@@ -63,7 +75,25 @@ const productosController = {
   try {
     const today = new Date();
 
-    const producto = await Producto.findByPk(req.params.id);
+    const producto = await Producto.findOne({
+      where: {
+        id: req.params.id,
+        [Op.and]: [
+          {
+            [Op.or]: [
+              { validFrom: null },
+              { validFrom: { [Op.lte]: today } },
+            ],
+          },
+          {
+            [Op.or]: [
+              { validTo: null },
+              { validTo: { [Op.gte]: today } },
+            ],
+          },
+        ],
+      },
+    });
 
     if (!producto) {
       return res.status(404).json({

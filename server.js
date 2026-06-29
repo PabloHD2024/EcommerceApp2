@@ -26,6 +26,10 @@ require("./src/models/User");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET es obligatorio. Definilo en el archivo .env antes de iniciar el servidor.");
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -137,7 +141,18 @@ app.post("/api/checkout", authenticateToken, async (req, res) => {
         });
       }
 
-      if (producto.stock < cantidadSolicitada) {
+      const [stockActualizado] = await Producto.update(
+        { stock: sequelize.literal(`stock - ${cantidadSolicitada}`) },
+        {
+          where: {
+            id: idProducto,
+            stock: { [Op.gte]: cantidadSolicitada },
+          },
+          transaction,
+        },
+      );
+
+      if (stockActualizado === 0) {
         await transaction.rollback();
         return res.status(400).json({
           mensaje: `Stock insuficiente para ${producto.nombre}`
@@ -145,11 +160,6 @@ app.post("/api/checkout", authenticateToken, async (req, res) => {
       }
 
       totalCalculado += producto.precio * cantidadSolicitada;
-
-      await producto.update(
-        { stock: producto.stock - cantidadSolicitada },
-        { transaction },
-      );
     }
 
     let totalFinal = totalCalculado;
@@ -170,8 +180,26 @@ app.post("/api/checkout", authenticateToken, async (req, res) => {
       }
 
       totalFinal = cupon.aplicarDescuento(totalCalculado);
-      cupon.usos_actuales += 1;
-      await cupon.save({ transaction });
+      const todayString = today.toISOString().split("T")[0];
+      const [cuponActualizado] = await Cupon.update(
+        { usos_actuales: sequelize.literal("usos_actuales + 1") },
+        {
+          where: {
+            id: cupon.id,
+            activo: true,
+            fecha_vencimiento: { [Op.gte]: todayString },
+            usos_actuales: { [Op.lt]: sequelize.col("limite_stock") },
+          },
+          transaction,
+        },
+      );
+
+      if (cuponActualizado === 0) {
+        await transaction.rollback();
+        return res.status(400).json({
+          mensaje: "El cupón aplicado ya no tiene usos disponibles"
+        });
+      }
 
       cuponAplicado = {
         codigo: cupon.codigo,
@@ -196,7 +224,9 @@ app.post("/api/checkout", authenticateToken, async (req, res) => {
 });
 
 // Iniciar servidor
-sequelize.sync({ alter: true })
+const shouldAlterSchema = process.env.DB_SYNC_ALTER === "true" || process.env.NODE_ENV !== "production";
+
+sequelize.sync(shouldAlterSchema ? { alter: true } : {})
   .then(() => {
     app.listen(PORT, () => {
       console.log(`🚀 Servidor en http://localhost:${PORT}`);

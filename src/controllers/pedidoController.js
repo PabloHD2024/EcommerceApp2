@@ -1,6 +1,7 @@
 const Pedido = require('../models/Pedido');
 const DetallePedido = require('../models/DetallePedido');
 const Producto = require('../models/Producto');
+const sequelize = require('../config/database');
 
 const pedidoController = {
   getAll: async (req, res) => {
@@ -34,10 +35,13 @@ const pedidoController = {
   },
 
   create: async (req, res) => {
+    const transaction = await sequelize.transaction();
+
     try {
       const nuevoPedido = req.body;
 
       if (!nuevoPedido.cliente || !nuevoPedido.productos || nuevoPedido.productos.length === 0) {
+        await transaction.rollback();
         return res.status(400).json({ mensaje: 'Los campos cliente y productos son obligatorios' });
       }
 
@@ -46,16 +50,19 @@ const pedidoController = {
 
       for (const item of nuevoPedido.productos) {
         if (!item.productoId || !item.cantidad || item.cantidad <= 0) {
+          await transaction.rollback();
           return res.status(400).json({ mensaje: 'Cada producto debe tener productoId y cantidad mayor a 0' });
         }
 
-        const producto = await Producto.findByPk(item.productoId);
+        const producto = await Producto.findByPk(item.productoId, { transaction });
 
         if (!producto) {
+          await transaction.rollback();
           return res.status(404).json({ mensaje: `Producto con id ${item.productoId} no encontrado` });
         }
 
         if (producto.stock < item.cantidad) {
+          await transaction.rollback();
           return res.status(400).json({ mensaje: `No hay stock suficiente para el producto ${producto.nombre}` });
         }
 
@@ -74,7 +81,7 @@ const pedidoController = {
         fecha: new Date().toISOString().split('T')[0],
         estado: 'pendiente',
         total: totalPedido
-      });
+      }, { transaction });
 
       const detallesCreados = [];
 
@@ -86,14 +93,16 @@ const pedidoController = {
           cantidad: item.cantidad,
           precioUnitario: item.producto.precio,
           subtotal: item.subtotal
-        });
+        }, { transaction });
 
         await item.producto.update({
           stock: item.producto.stock - item.cantidad
-        });
+        }, { transaction });
 
         detallesCreados.push(detalleCreado);
       }
+
+      await transaction.commit();
 
       res.status(201).json({
         mensaje: 'Pedido creado correctamente',
@@ -101,6 +110,7 @@ const pedidoController = {
         detalles: detallesCreados
       });
     } catch (error) {
+      await transaction.rollback();
       res.status(500).json({ mensaje: 'Error al crear el pedido', error: error.message });
     }
   },
@@ -128,21 +138,28 @@ const pedidoController = {
   },
 
   remove: async (req, res) => {
+    const transaction = await sequelize.transaction();
+
     try {
-      const pedido = await Pedido.findByPk(req.params.id);
+      const pedido = await Pedido.findByPk(req.params.id, { transaction });
 
       if (!pedido) {
+        await transaction.rollback();
         return res.status(404).json({ mensaje: 'Pedido no encontrado' });
       }
 
       await DetallePedido.destroy({
-        where: { pedidoId: req.params.id }
+        where: { pedidoId: req.params.id },
+        transaction
       });
 
-      await pedido.destroy();
+      await pedido.destroy({ transaction });
+
+      await transaction.commit();
 
       res.json({ mensaje: 'Pedido eliminado correctamente' });
     } catch (error) {
+      await transaction.rollback();
       res.status(500).json({ mensaje: 'Error al eliminar el pedido', error: error.message });
     }
   }
