@@ -884,7 +884,7 @@ body.modal-open {
     margin-bottom: 30px;
     box-shadow: var(--shadow);
     max-width: 1435px;
-    margin: 30px auto;
+    margin: 30px;
 }
 
 .filters-container h3 {
@@ -1363,6 +1363,7 @@ body.modal-open {
     
     .filters-buttons {
         gap: 8px;
+        margin: o auto;
     }
     
     .filter-btn {
