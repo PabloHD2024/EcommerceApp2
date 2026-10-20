@@ -2,9 +2,6 @@
 
 Aplicación web de comercio electrónico full stack desarrollada como proyecto de portafolio. Simula el flujo completo de una tienda online: catálogo de productos, carrito de compras con persistencia y comunicación con un backend propio.
 
-## 🚀 Demo
-[Agregar link a deploy si lo tenés – ej. GitHub Pages para el front, Render/Railway para el back]
-
 ## ✨ Funcionalidades
 - Visualización de catálogo de productos
 - Agregar y eliminar productos del carrito
