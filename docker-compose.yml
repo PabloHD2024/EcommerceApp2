@@ -1,0 +1,118 @@
+services:
+  mongo:
+    image: mongo:8
+    environment:
+      MONGO_INITDB_DATABASE: ecommerce_users
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ecommerce_catalog
+      POSTGRES_USER: ecommerce
+      POSTGRES_PASSWORD: local-dev-only
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecommerce -d ecommerce_catalog"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ecommerce_orders
+      MYSQL_USER: ecommerce
+      MYSQL_PASSWORD: local-dev-only
+      MYSQL_ROOT_PASSWORD: local-root-only
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uecommerce", "-plocal-dev-only"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  ms-usuarios:
+    build: ./ms-usuarios
+    environment:
+      PORT: 3101
+      MONGODB_URI: mongodb://mongo:27017/ecommerce_users
+      JWT_SECRET: local-development-secret-change-before-deploy-0001
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "3101:3101"
+
+  ms-catalogo:
+    build: ./ms-catalogo
+    command: ["sh", "-c", "npm run migrate && npm start"]
+    environment:
+      PORT: 3102
+      DATABASE_URL: postgres://ecommerce:local-dev-only@postgres:5432/ecommerce_catalog
+      DATABASE_SSL: "false"
+      JWT_SECRET: local-development-secret-change-before-deploy-0001
+      SERVICE_TOKEN: local-development-service-token-change-before-deploy
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3102:3102"
+
+  ms-pedidos:
+    build: ./ms-pedidos
+    command: ["sh", "-c", "npm run migrate && npm start"]
+    environment:
+      PORT: 3103
+      DATABASE_URL: mysql://ecommerce:local-dev-only@mysql:3306/ecommerce_orders
+      SERVICE_TOKEN: local-development-service-token-change-before-deploy
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "3103:3103"
+
+  api-gateway:
+    build: ./api-gateway
+    environment:
+      PORT: 3000
+      JWT_SECRET: local-development-secret-change-before-deploy-0001
+      SERVICE_TOKEN: local-development-service-token-change-before-deploy
+      USERS_SERVICE_URL: http://ms-usuarios:3101
+      CATALOG_SERVICE_URL: http://ms-catalogo:3102
+      ORDERS_SERVICE_URL: http://ms-pedidos:3103
+      FRONTEND_ORIGIN: http://localhost:8080
+    depends_on:
+      - ms-usuarios
+      - ms-catalogo
+      - ms-pedidos
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build: ./frontend
+    environment:
+      PORT: 8080
+    depends_on:
+      - api-gateway
+    ports:
+      - "8080:8080"
+
+volumes:
+  mongo_data:
+  postgres_data:
+  mysql_data:

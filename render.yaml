@@ -1,0 +1,59 @@
+services:
+  - type: web
+    name: ecommerce-api-gateway
+    runtime: docker
+    rootDir: api-gateway
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: JWT_SECRET
+        sync: false
+      - key: SERVICE_TOKEN
+        sync: false
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: USERS_SERVICE_URL
+        sync: false
+      - key: CATALOG_SERVICE_URL
+        sync: false
+      - key: ORDERS_SERVICE_URL
+        sync: false
+  - type: web
+    name: ecommerce-ms-usuarios
+    runtime: docker
+    rootDir: ms-usuarios
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+  - type: web
+    name: ecommerce-ms-catalogo
+    runtime: docker
+    rootDir: ms-catalogo
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: "true"
+      - key: JWT_SECRET
+        sync: false
+      - key: SERVICE_TOKEN
+        sync: false
+  - type: web
+    name: ecommerce-ms-pedidos
+    runtime: docker
+    rootDir: ms-pedidos
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: "true"
+      - key: SERVICE_TOKEN
+        sync: false

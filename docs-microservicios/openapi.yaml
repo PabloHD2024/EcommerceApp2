@@ -1,0 +1,575 @@
+openapi: 3.1.0
+info:
+  title: Ecommerce Gateway and internal service contracts
+  version: 1.0.0
+  description: |
+    Public requests enter through the Gateway. Internal inventory and order-state
+    routes are available only to authenticated services and must not be exposed
+    to browser clients. Amounts are integer cents inside service-to-service
+    contracts; public display amounts are decimal ARS values.
+servers:
+  - url: https://your-api-gateway.onrender.com
+    description: Public Gateway
+tags:
+  - name: Users
+  - name: Catalog
+  - name: Orders
+  - name: Internal
+paths:
+  /api/usuarios:
+    post:
+      tags: [Users]
+      summary: Register a client account
+      description: Public registration always assigns the client role, regardless of fields supplied by the caller.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Registration'
+      responses:
+        '201':
+          description: Client account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/sesiones:
+    post:
+      tags: [Users]
+      summary: Create a session
+      description: Verifies the bcrypt password and issues a two-hour JWT. Follows the proposed contract's 201 response.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 1 }
+      responses:
+        '201':
+          description: Authenticated session created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token, user]
+                properties:
+                  token: { type: string }
+                  user: { $ref: '#/components/schemas/User' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/usuarios/me:
+    get:
+      tags: [Users]
+      summary: Get the authenticated user's profile
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Profile without password hash
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  user: { $ref: '#/components/schemas/User' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/productos:
+    get:
+      tags: [Catalog]
+      summary: Search and paginate active products
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 6 }
+        - in: query
+          name: categoria
+          schema: { type: string }
+        - in: query
+          name: nombre
+          schema: { type: string }
+        - in: query
+          name: sortBy
+          schema: { type: string, enum: [id, nombre, precio] }
+        - in: query
+          name: sortOrder
+          schema: { type: string, enum: [asc, desc] }
+      responses:
+        '200':
+          description: Paginated product list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Product' }
+                  pagination: { $ref: '#/components/schemas/Pagination' }
+  /api/productos/{id}:
+    get:
+      tags: [Catalog]
+      summary: Get an active, currently valid product
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Product' }
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/cupones/{code}:
+    get:
+      tags: [Catalog]
+      summary: Validate a coupon for display
+      description: Validation is advisory. Final discount and usage are decided atomically by Catalog during inventory processing.
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Coupon is currently valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valido: { type: boolean, const: true }
+                  codigo: { type: string }
+                  descuento: { type: integer, minimum: 1, maximum: 100 }
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/pedidos:
+    post:
+      tags: [Orders]
+      summary: Create and coordinate an order
+      description: |
+        The Gateway stores the pending order first, then coordinates atomic
+        inventory authorization and persists the final state. Client-supplied
+        prices, totals, discounts, identity and states are ignored.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 128 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateOrder' }
+      responses:
+        '201':
+          description: New order has been persisted and confirmed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '200':
+          description: Existing result reused for the same idempotency key and content
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '202':
+          description: Outcome is uncertain; order remains pending and can be queried
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [estado, attemptId, uncertain]
+                properties:
+                  pedidoId: { type: integer }
+                  estado: { type: string, const: pending }
+                  attemptId: { type: string }
+                  uncertain: { type: boolean, const: true }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/pedidos/operaciones/{attemptId}:
+    get:
+      tags: [Orders]
+      summary: Query or reconcile an order attempt
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: attemptId
+          required: true
+          schema: { type: string, maxLength: 128 }
+      responses:
+        '200':
+          description: Persisted final order state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '202':
+          description: Still pending; retry the status query with the same attempt ID
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/pedidos/{pedidoId}/pagar:
+    post:
+      tags: [Orders]
+      summary: Simulate payment for a confirmed order
+      description: A successful payment atomically records payment, marks the order paid, and creates one non-fiscal receipt. A rejected attempt leaves the order awaiting payment.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: pedidoId
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [metodo]
+              properties:
+                metodo: { type: string, enum: [tarjeta, transferencia] }
+                resultadoSimulado: { type: string, enum: [aprobado, rechazado], default: aprobado }
+      responses:
+        '200':
+          description: Payment attempt recorded or existing paid result reused
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [mensaje, estadoPedido]
+                properties:
+                  mensaje: { type: string }
+                  estadoPedido: { type: string, enum: [Pendiente, Pagado] }
+                  pago: { type: [object, 'null'] }
+                  comprobante: { type: [object, 'null'] }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/pedidos/{pedidoId}/comprobante:
+    get:
+      tags: [Orders]
+      summary: Retrieve an order's approved non-fiscal receipt
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: pedidoId
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Receipt and its historical itemized amounts
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, numero, pedidoId, fecha, productos, total, estadoPago]
+                properties:
+                  id: { type: integer }
+                  numero: { type: string }
+                  pedidoId: { type: integer }
+                  fecha: { type: string, format: date-time }
+                  tipoFactura: { type: string, const: Comprobante no fiscal }
+                  cliente: { type: string }
+                  subtotal: { type: number }
+                  descuento: { type: number }
+                  cupon: { type: [string, 'null'] }
+                  total: { type: number }
+                  metodoPago: { type: string, enum: [Tarjeta, Transferencia] }
+                  estadoPago: { type: string, const: Aprobado }
+                  productos: { type: array, items: { type: object } }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/pedidos/{pedidoId}/cancelar:
+    patch:
+      tags: [Orders]
+      summary: Cancel an unpaid confirmed order
+      description: The Gateway persists a cancelling state, idempotently returns inventory and coupon usage through Catalog, then finalizes the cancellation. A 202 response indicates reconciliation is still required.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: pedidoId
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Order cancelled and inventory returned
+        '202':
+          description: Cancellation is pending reconciliation
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Client role required
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/movimientos-stock:
+    post:
+      tags: [Internal]
+      summary: Apply an atomic sale or return inventory operation
+      description: Internal Gateway-to-Catalog route. Sales deduct stock and consume a coupon once; returns reverse the original operation and release its coupon use once.
+      servers:
+        - url: https://your-ms-catalogo.onrender.com
+      security: [{ serviceToken: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InventoryOperation' }
+      responses:
+        '201':
+          description: New inventory operation committed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InventoryResult' }
+        '200':
+          description: Matching operation already committed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InventoryResult' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Service credential required
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /api/pedidos/{pedidoId}:
+    put:
+      tags: [Orders]
+      summary: Advance paid order to shipping or delivery
+      description: Admin-only Gateway adapter for the legacy dashboard. Maps Enviado/Entregado to the internal shipped/delivered states.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: pedidoId
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [estado]
+              properties:
+                estado: { type: string, enum: [Enviado, Entregado] }
+      responses:
+        '200':
+          description: Shipping state persisted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Administrator role required
+        '409':
+          $ref: '#/components/responses/Conflict'
+    patch:
+      tags: [Internal]
+      summary: Persist an authorized order transition
+      description: Internal Gateway-to-Orders route. The Gateway blocks browser calls to this operation.
+      servers:
+        - url: https://your-ms-pedidos.onrender.com
+      security: [{ serviceToken: [] }]
+      parameters:
+        - in: path
+          name: pedidoId
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [estado]
+              properties:
+                estado: { type: string, enum: [confirmed, rejected, cancelling, cancelled, shipped, delivered] }
+                inventory: { $ref: '#/components/schemas/InventoryResult' }
+      responses:
+        '200':
+          description: State transition persisted or identical transition reused
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Order' }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Service credential required
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    serviceToken:
+      type: apiKey
+      in: header
+      name: x-service-token
+  parameters:
+    Id:
+      in: path
+      name: id
+      required: true
+      schema: { type: integer, minimum: 1 }
+  responses:
+    BadRequest:
+      description: Request validation failed
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Authentication required or token invalid
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: State, stock, or idempotency conflict
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    Error:
+      type: object
+      properties:
+        message: { type: string }
+        uncertain: { type: boolean }
+    Registration:
+      type: object
+      required: [name, apellido, email, password]
+      properties:
+        name: { type: string, minLength: 1 }
+        apellido: { type: string, minLength: 1 }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        telefono: { type: string, pattern: '^[0-9]+$' }
+    User:
+      type: object
+      required: [id, name, apellido, email, role]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        apellido: { type: string }
+        email: { type: string, format: email }
+        telefono: { type: [string, 'null'] }
+        role: { type: string, enum: [client, admin] }
+    UserResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        user: { $ref: '#/components/schemas/User' }
+    Product:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        nombre: { type: string }
+        price: { type: number, minimum: 0 }
+        precio: { type: number, minimum: 0 }
+        stock: { type: integer, minimum: 0 }
+        categoria: { type: string }
+        descripcion: { type: string }
+        image: { type: [string, 'null'] }
+    Pagination:
+      type: object
+      properties:
+        page: { type: integer }
+        limit: { type: integer }
+        totalItems: { type: integer }
+        totalPages: { type: integer }
+        hasPreviousPage: { type: boolean }
+        hasNextPage: { type: boolean }
+    OrderItemInput:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId: { type: integer, minimum: 1 }
+        quantity: { type: integer, minimum: 1 }
+    CreateOrder:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: '#/components/schemas/OrderItemInput' }
+        couponCode: { type: [string, 'null'] }
+    Order:
+      type: object
+      properties:
+        id: { type: integer }
+        estado: { type: string, enum: [pending, confirmed, rejected, paid, cancelling, cancelled, shipped, delivered] }
+        subtotal: { type: number }
+        descuento: { type: number }
+        total: { type: number }
+        detalles:
+          type: array
+          items: { type: object }
+    InventoryOperation:
+      type: object
+      required: [orderId, idempotencyKey, items]
+      properties:
+        action: { type: string, enum: [sale, return], default: sale }
+        orderId: { type: string, minLength: 1 }
+        idempotencyKey: { type: string, minLength: 1, maxLength: 128 }
+        items:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/OrderItemInput' }
+        couponCode: { type: [string, 'null'] }
+    AuthorizedInventoryItem:
+      type: object
+      required: [productId, quantity, productName, unitPriceCents, subtotalCents]
+      properties:
+        productId: { type: integer }
+        quantity: { type: integer }
+        productName: { type: string }
+        unitPriceCents: { type: integer, minimum: 0 }
+        subtotalCents: { type: integer, minimum: 0 }
+    InventoryResult:
+      type: object
+      required: [orderId, items, subtotalCents, discountCents, totalCents]
+      properties:
+        orderId: { type: string }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/AuthorizedInventoryItem' }
+        subtotalCents: { type: integer, minimum: 0 }
+        discountCents: { type: integer, minimum: 0 }
+        totalCents: { type: integer, minimum: 0 }
+        couponCode: { type: [string, 'null'] }
